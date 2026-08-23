@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project | PEEMPDESIGNER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ================= THEME VARIABLES ================= */
+    :root {
+      --orange: #f97316;
+      --ink: #111827;
+      --paper: #f9fafb;
+      --teal: #0f766e;
+      --bg-main: #f9fafb;
+      --bg-card: #ffffff;
+      --border-color: #e5e7eb;
+      --heading-color: #111827;
+      --nav-bg: #ffffff;
+      --error-color: #b91c1c;
+    }
+
+    [data-theme="dark"] {
+      --bg-main: #0d0f12;
+      --bg-card: #161920;
+      --paper: #161920;
+      --ink: #f0f0f0;
+      --border-color: #2a2d35;
+      --heading-color: #ffffff;
+      --nav-bg: #161920;
+      --teal: #14b8a6;
+      --error-color: #f87171;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg-main);
+      color: var(--ink);
+      font-family: "Inter", sans-serif;
+      min-height: 100vh;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* ================= HEADER ================= */
+
+    header {
+      align-items: center;
+      background: var(--nav-bg);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      padding: 20px 7%;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    header a {
+      color: var(--heading-color);
+      font-family: "Poppins", sans-serif;
+      font-weight: 800;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--ink);
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: 0.3s ease;
+      font-family: "Inter", sans-serif;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--ink);
+    }
+
+    .back-link {
+      background: var(--ink);
+      border-radius: 999px;
+      color: var(--bg-main);
+      font-family: "Inter", sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 13px 20px;
+      text-decoration: none;
+      transition: background-color 180ms ease, transform 180ms ease, color 0.3s ease;
+    }
+
+    .back-link:hover,
+    .back-link:focus-visible {
+      background: var(--orange);
+      color: #ffffff;
+      transform: translateY(-3px);
+    }
+
+    /* ================= MAIN CONTENT ================= */
+
+    main {
+      margin: auto;
+      max-width: 1200px;
+      padding: 70px 7% 100px;
+      text-align: center;
+    }
+
+    .tag {
+      color: var(--teal);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      transition: color 0.3s ease;
+    }
+
+    h1 {
+      color: var(--heading-color);
+      font-family: "Poppins", sans-serif;
+      font-size: clamp(36px, 6vw, 72px);
+      line-height: 1.05;
+      margin-bottom: 42px;
+      transition: color 0.3s ease;
+    }
+
+    .project-frame {
+      align-items: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      min-height: 420px;
+      overflow: hidden;
+      padding: 30px;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .project-frame img {
+      display: block;
+      max-height: 720px;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
+    .error {
+      color: var(--error-color);
+      display: none;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+
+    /* ================= RESPONSIVE ================= */
+
+    @media (max-width: 600px) {
+      header {
+        padding: 16px 20px;
+      }
+
+      header a:first-child {
+        font-size: 14px;
+      }
+
+      .back-link {
+        font-size: 12px;
+        padding: 10px 14px;
+      }
+
+      .theme-toggle {
+        font-size: 12px;
+        padding: 6px 12px;
+      }
+
+      main {
+        padding: 48px 20px 70px;
+      }
+
+      .project-frame {
+        min-height: 300px;
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="portfolio.html">PEEMPDESIGNER</a>
+    <div class="header-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle Theme">
+        <span id="themeIcon">🌙</span> <span id="themeText">Dark</span>
+      </button>
+      <a class="back-link" href="portfolio.html">← Back to Portfolio</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="tag">Selected Project</div>
+    <h1 id="project-title">Project</h1>
+    <div class="project-frame">
+      <img id="project-image" alt="" />
+      <p class="error" id="project-error">Project image not found.</p>
+    </div>
+  </main>
+
+  <script>
+    /* ================= THEME TOGGLE SCRIPT ================= */
+    const toggleBtn = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const themeText = document.getElementById('themeText');
+    const savedTheme = localStorage.getItem('theme');
+
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      setTheme('dark');
+    } else {
+      setTheme('light');
+    }
+
+    toggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    });
+
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('theme', t);
+      themeIcon.textContent = t === 'dark' ? '☀️' : '🌙';
+      themeText.textContent = t === 'dark' ? 'Light' : 'Dark';
+    }
+
+    /* ================= DYNAMIC PROJECT PARSER ================= */
+    const params = new URLSearchParams(window.location.search);
+    const imagePath = params.get("image");
+    const title = params.get("title") || "Project";
+    const image = document.getElementById("project-image");
+    const error = document.getElementById("project-error");
+
+    document.title = `${title} | PEEMPDESIGNER`;
+    document.getElementById("project-title").textContent = title;
+
+    if (imagePath && imagePath.startsWith("images/")) {
+      image.src = imagePath;
+      image.alt = title;
+      image.addEventListener("error", () => {
+        image.style.display = "none";
+        error.style.display = "block";
+      });
+    } else {
+      image.style.display = "none";
+      error.style.display = "block";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About | PEEMPDESIGNER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    /* COLOR THEMES */
+    :root {
+      /* Base Colors */
+      --orange: #f97316;
+      --yellow: #fde68a;
+      --green: #059669;
+      --teal: #0f766e;
+
+      /* Light Theme (Default) */
+      --bg-main: #ffffff;
+      --bg-paper: #f9fafb;
+      --bg-nav: rgba(255, 255, 255, 0.95);
+      --ink: #111827;
+      --muted: #374151;
+      --border: #e5e7eb;
+      --card-shadow: rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] {
+      /* Dark Theme */
+      --bg-main: #0f172a;
+      --bg-paper: #1e293b;
+      --bg-nav: rgba(15, 23, 42, 0.95);
+      --ink: #f8fafc;
+      --muted: #cbd5e1;
+      --border: #334155;
+      --card-shadow: rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg-main);
+      color: var(--ink);
+      font-family: "Poppins", sans-serif;
+      overflow-x: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* NAVIGATION */
+    nav {
+      align-items: center;
+      background: var(--bg-nav);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      height: 88px;
+      justify-content: space-between;
+      padding: 0 5%;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .logo {
+      font-family: "Poppins", sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      text-decoration: none;
+      color: var(--ink);
+    }
+
+    .nav-links {
+      align-items: center;
+      display: flex;
+      gap: clamp(16px, 4vw, 48px);
+      margin-left: auto;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: var(--orange);
+    }
+
+    /* THEME TOGGLE BUTTON */
+    .theme-toggle {
+      background: var(--bg-paper);
+      border: 1px solid var(--border);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.3s ease;
+      margin-left: 20px;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--orange);
+    }
+
+    /* ABOUT PAGE STYLES */
+    .figma-about {
+      color: var(--ink);
+      font-family: "Inter", sans-serif;
+    }
+
+    .figma-hero {
+      align-items: center;
+      background: linear-gradient(rgba(17, 24, 39, 0.75), rgba(17, 24, 39, 0.75)), url("https://www.figma.com/api/mcp/asset/d207d759-b837-4c3d-82a1-8501bb3b01df.png") center / cover;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      height: 520px;
+      justify-content: center;
+      padding: 80px 20px;
+      text-align: center;
+    }
+
+    .figma-hero h1 {
+      color: var(--orange);
+      font-family: "Poppins", sans-serif;
+      font-size: clamp(44px, 5vw, 64px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.1;
+    }
+
+    .figma-hero p {
+      font-size: 20px;
+      line-height: 1.5;
+      margin-top: 24px;
+      max-width: 640px;
+      color: #f9fafb;
+    }
+
+    .figma-content {
+      background: var(--bg-paper);
+      padding: 80px 5%;
+      transition: background-color 0.3s ease;
+    }
+
+    .figma-story {
+      align-items: center;
+      display: grid;
+      gap: 64px;
+      grid-template-columns: 1fr 480px;
+    }
+
+    .figma-story h2,
+    .figma-strengths h2 {
+      color: var(--ink);
+      font-family: "Poppins", sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+
+    .figma-story p {
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    .figma-story-image {
+      border-radius: 16px;
+      border: 4px solid var(--yellow);
+      display: block;
+      height: 320px;
+      object-fit: cover;
+      width: 100%;
+    }
+
+    .figma-strengths {
+      padding-top: 64px;
+    }
+
+    .figma-strength-grid {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .figma-strength-card {
+      border-radius: 20px;
+      min-height: 190px;
+      padding: 28px;
+      box-shadow: 0 4px 12px var(--card-shadow);
+      transition: transform 0.3s ease;
+    }
+
+    .figma-strength-card:nth-child(1) {
+      background: var(--orange);
+      color: white;
+    }
+
+    .figma-strength-card:nth-child(2) {
+      background: var(--yellow);
+      color: #111827;
+    }
+
+    .figma-strength-card:nth-child(3) {
+      background: var(--teal);
+      color: white;
+    }
+
+    .figma-strength-card h3 {
+      font-size: 20px;
+      margin: 16px 0 8px;
+      font-family: "Poppins", sans-serif;
+    }
+
+    .figma-strength-card p {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .figma-strength-card:nth-child(1) p,
+    .figma-strength-card:nth-child(3) p {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .figma-strength-card:nth-child(2) p {
+      color: #374151;
+    }
+
+    .figma-icon {
+      align-items: center;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      height: 44px;
+      justify-content: center;
+      width: 44px;
+    }
+
+    .figma-icon img {
+      height: 22px;
+      width: 22px;
+    }
+
+    .figma-cta {
+      display: flex;
+      justify-content: center;
+      padding-top: 64px;
+    }
+
+    .figma-cta a {
+      background: var(--orange);
+      border-radius: 999px;
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 18px 36px;
+      text-decoration: none;
+      transition: transform 0.2s ease, background 0.3s ease;
+    }
+
+    .figma-cta a:hover {
+      background: var(--ink);
+      transform: translateY(-4px);
+    }
+
+    footer {
+      background: var(--bg-main);
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      font-size: 14px;
+      padding: 28px 5%;
+      text-align: center;
+      transition: background-color 0.3s ease;
+    }
+
+    /* SCROLL ANIMATIONS */
+    .animate-on-scroll {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+      will-change: opacity, transform;
+    }
+
+    .animate-on-scroll.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .delay-1 { transition-delay: 0.1s; }
+    .delay-2 { transition-delay: 0.25s; }
+    .delay-3 { transition-delay: 0.4s; }
+
+    @media (max-width: 760px) {
+      nav {
+        height: 72px;
+        padding: 0 16px;
+      }
+
+      .nav-links {
+        gap: 8px;
+      }
+
+      .nav-links a {
+        font-size: 11px;
+      }
+
+      .theme-toggle {
+        margin-left: 8px;
+        padding: 6px 10px;
+        font-size: 11px;
+      }
+
+      .figma-hero {
+        height: 420px;
+        padding: 60px 24px;
+      }
+
+      .figma-content {
+        padding: 48px 22px;
+      }
+
+      .figma-story {
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+
+      .figma-strength-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="logo">PEEMPDESIGNER</a>
+
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html" class="active">About</a></li>
+      <li><a href="index.html#services">Services</a></li>
+      <li><a href="portfolio.html">Portfolio</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+
+    <!-- MODE TOGGLE BUTTON -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+      <span id="themeIcon">🌙</span> <span id="themeText">Dark</span>
+    </button>
+  </nav>
+
+  <main class="figma-about">
+    <section class="figma-hero animate-on-scroll">
+      <h1>About Me</h1>
+      <p>
+        I’m a graphic designer passionate about visual storytelling,
+        typography, and thoughtful branding that helps people connect with
+        ideas.
+      </p>
+    </section>
+
+    <section class="figma-content">
+      <div class="figma-story animate-on-scroll">
+        <div>
+          <h2>My Story</h2>
+          <p>
+            I’ve always been drawn to the way a single layout, a well-chosen
+            typeface, or a simple mark can turn a message into a memory. As a
+            graphic designer, I partner with clients to craft visual systems
+            that feel intentional, clear, and human.
+          </p>
+        </div>
+        <img
+          class="figma-story-image"
+          src="https://www.figma.com/api/mcp/asset/78313e8a-826e-40cb-a293-e3b33677b402.png"
+          alt="Designer creating a hand-lettered layout"
+        />
+      </div>
+
+      <section class="figma-strengths">
+        <h2 class="animate-on-scroll">My Strengths</h2>
+        <div class="figma-strength-grid">
+          <article class="figma-strength-card animate-on-scroll delay-1">
+            <div class="figma-icon"><img src="https://www.figma.com/api/mcp/asset/02a34495-6e63-4ce4-9874-f8e2b4dae576.svg" alt="" /></div>
+            <h3>Branding &amp; Identity</h3>
+            <p>I help brands find their voice through logos, color systems, typography, and guidelines that scale from business cards to websites.</p>
+          </article>
+          <article class="figma-strength-card animate-on-scroll delay-2">
+            <div class="figma-icon"><img src="https://www.figma.com/api/mcp/asset/50868dc4-60ca-415e-8618-152511c7baf1.svg" alt="" /></div>
+            <h3>Print &amp; Digital</h3>
+            <p>From posters and brochures to social assets and websites, I design across mediums with a focus on consistency and impact.</p>
+          </article>
+          <article class="figma-strength-card animate-on-scroll delay-3">
+            <div class="figma-icon"><img src="https://www.figma.com/api/mcp/asset/5df3b0eb-bbcb-4082-b139-7004ebe36e52.svg" alt="" /></div>
+            <h3>Typography</h3>
+            <p>I believe type is the foundation of good design. I love pairing fonts, setting hierarchies, and refining layouts that read beautifully.</p>
+          </article>
+        </div>
+      </section>
+
+      <div class="figma-cta animate-on-scroll">
+        <a href="contact.html">Let’s Work Together</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>© 2026 Peempdesigner. All Rights Reserved.</div>
+  </footer>
+
+  <script>
+    // --- LIGHT/DARK MODE TOGGLE ---
+    const toggleBtn = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const themeText = document.getElementById('themeText');
+
+    // Check saved mode or system preference
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+      setTheme('dark');
+    } else {
+      setTheme('light');
+    }
+
+    toggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    });
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      if (theme === 'dark') {
+        themeIcon.textContent = '☀️';
+        themeText.textContent = 'Light';
+      } else {
+        themeIcon.textContent = '🌙';
+        themeText.textContent = 'Dark';
+      }
+    }
+
+    // --- SCROLL ANIMATIONS ---
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.15
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('show');
+        } else {
+          entry.target.classList.remove('show');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.animate-on-scroll').forEach((el) => {
+      observer.observe(el);
+    });
+  </script>
+
+</body>
+</html>

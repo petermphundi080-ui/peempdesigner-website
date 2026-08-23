@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PEEMPDESIGNER | Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    /* ================= THEME VARIABLES ================= */
+    :root {
+      --orange: #f97316;
+      --ink: #111827;
+      --muted: #4b5563;
+      --paper: #f9fafb;
+      --bg-main: #ffffff;
+      --bg-card: #ffffff;
+      --border-color: #e5e7eb;
+      --yellow: #fde68a;
+      --green: #059669;
+      --teal: #0f766e;
+      --heading-color: #000000;
+      --nav-bg: rgba(255, 255, 255, 0.88);
+      --hero-overlay: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.98) 0%,
+        rgba(255, 255, 255, 0.9) 65%,
+        rgba(255, 255, 255, 0) 100%
+      );
+    }
+
+    [data-theme="dark"] {
+      --bg-main: #0d0f12;
+      --bg-card: #161920;
+      --paper: #161920;
+      --ink: #f0f0f0;
+      --muted: #a0a0a0;
+      --border-color: #2a2d35;
+      --heading-color: #ffffff;
+      --nav-bg: rgba(13, 15, 18, 0.88);
+      --hero-overlay: linear-gradient(
+        90deg,
+        rgba(13, 15, 18, 0.98) 0%,
+        rgba(13, 15, 18, 0.9) 65%,
+        rgba(13, 15, 18, 0) 100%
+      );
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg-main);
+      color: var(--ink);
+      font-family: "Poppins", sans-serif;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* ================= NAVIGATION ================= */
+
+    nav {
+      align-items: center;
+      background: var(--nav-bg);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      height: 88px;
+      justify-content: space-between;
+      padding: 0 5%;
+      position: sticky;
+      top: 0;
+      width: 100%;
+      z-index: 1000;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .logo {
+      height: 64px;
+      object-fit: contain;
+      width: 64px;
+    }
+
+    .nav-links {
+      align-items: center;
+      display: flex;
+      gap: clamp(20px, 4vw, 50px);
+      margin-left: auto;
+      margin-right: 20px;
+    }
+
+    .nav-links a {
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: var(--orange);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--ink);
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: 0.3s ease;
+      font-family: inherit;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--ink);
+    }
+
+    .hire-button,
+    .portfolio-button {
+      background: var(--ink);
+      border: 0;
+      border-radius: 999px;
+      color: var(--bg-main);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+      transition: background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease, color 0.3s ease;
+    }
+
+    .hire-button:hover,
+    .portfolio-button:hover,
+    .hire-button:focus-visible,
+    .portfolio-button:focus-visible {
+      background: var(--orange);
+      color: #ffffff;
+      box-shadow: 0 10px 18px rgba(17, 24, 39, 0.18);
+      transform: translateY(-3px);
+    }
+
+    .hire-button {
+      font-size: 14px;
+      padding: 14px 24px;
+    }
+
+    /* ================= HERO ================= */
+
+    .hero {
+      min-height: 650px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-image {
+      height: 100%;
+      left: 30%;
+      object-fit: cover;
+      object-position: center top;
+      position: absolute;
+      top: 0;
+      width: 75%;
+    }
+
+    .hero-content {
+      align-items: flex-start;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 650px;
+      padding: 100px 5% 50px;
+      position: relative;
+      width: 70%;
+      z-index: 5;
+    }
+
+    h1 {
+      color: var(--heading-color);
+      font-size: clamp(58px, 10vw, 132px);
+      font-weight: 800;
+      letter-spacing: -3px;
+      line-height: 0.90;
+      transition: color 0.3s ease;
+    }
+
+    h1 span {
+      color: var(--orange);
+      display: block;
+    }
+
+    .intro {
+      color: var(--muted);
+      font-size: clamp(15px, 2vw, 20px);
+      margin: 58px 0 30px 18px;
+    }
+
+    .portfolio-button {
+      font-size: 16px;
+      margin-left: 8%;
+      padding: 16px 27px;
+    }
+
+    /* ================= SERVICES ================= */
+
+    .services {
+      background: var(--paper);
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      min-height: 500px;
+      padding: 48px 5% 48px;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .section-title {
+      color: var(--heading-color);
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 9px;
+      transition: color 0.3s ease;
+    }
+
+    .section-line {
+      display: block;
+      height: 1px;
+      margin-bottom: 43px;
+      object-fit: fill;
+      width: 133px;
+    }
+
+    .service-grid {
+      display: grid;
+      gap: 30px;
+      grid-template-columns: 1.3fr 0.85fr;
+    }
+
+    .service-card {
+      border-radius: 50px;
+      min-height: 135px;
+      padding: 38px 48px;
+      transition: box-shadow 180ms ease, transform 180ms ease;
+    }
+
+    .service-card:hover,
+    .service-card:focus-within {
+      box-shadow: 0 16px 28px rgba(0, 0, 0, 0.25);
+      transform: translateY(-8px);
+    }
+
+    .service-card h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .service-card p {
+      font-size: 13px;
+      line-height: 1.5;
+      max-width: 390px;
+    }
+
+    .logo-card {
+      background: var(--orange);
+      color: #ffffff;
+    }
+
+    .brand-card {
+      background: var(--green);
+      color: #ffffff;
+    }
+
+    .social-card {
+      background: var(--yellow);
+      color: #111827;
+    }
+
+    .print-card {
+      background: var(--teal);
+      color: #ffffff;
+    }
+
+    /* ================= FOOTER ================= */
+
+    footer {
+      background: #0d0f12;
+      border-top: 2px solid var(--orange);
+      color: #ffffff;
+      font-size: 15px;
+      margin-top: 0;
+      padding: 40px 5%;
+      text-align: center;
+    }
+
+    /* ================= ANIMATIONS ================= */
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(42px);
+      transition: opacity 700ms ease, transform 700ms ease;
+    }
+
+    .reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hero-image.reveal-image {
+      opacity: 0;
+      transform: scale(1.05);
+      transition: opacity 800ms ease, transform 900ms ease;
+    }
+
+    .hero-image.reveal-image.is-visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .reveal-stagger > * {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 600ms ease, transform 600ms ease;
+    }
+
+    .reveal-stagger.is-visible > * {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal-stagger.is-visible > *:nth-child(2) {
+      transition-delay: 100ms;
+    }
+
+    .reveal-stagger.is-visible > *:nth-child(3) {
+      transition-delay: 200ms;
+    }
+
+    .reveal-stagger.is-visible > *:nth-child(4) {
+      transition-delay: 300ms;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      .reveal,
+      .hero-image.reveal-image,
+      .reveal-stagger > * {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+    }
+
+    /* ================= RESPONSIVE ================= */
+
+    @media (max-width: 850px) {
+      nav {
+        height: auto;
+        padding: 15px 5%;
+        flex-wrap: wrap;
+        row-gap: 12px;
+      }
+
+      .nav-links {
+        order: 3;
+        flex-basis: 100%;
+        justify-content: center;
+        margin: 5px 0 0;
+        gap: 18px;
+      }
+
+      .nav-actions {
+        order: 2;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .logo {
+        height: 52px;
+        width: 52px;
+      }
+
+      .nav-links a {
+        font-size: 13px;
+      }
+
+      .hire-button {
+        font-size: 12px;
+        padding: 10px 18px;
+      }
+
+      .hero {
+        min-height: 600px;
+      }
+
+      .hero-image {
+        height: 57%;
+        left: 30%;
+        opacity: 0.8;
+        top: 43%;
+        width: 70%;
+      }
+
+      .hero-content {
+        background: var(--hero-overlay);
+        min-height: 600px;
+        padding: 60px 24px 40px;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: clamp(48px, 15vw, 82px);
+        letter-spacing: -2px;
+      }
+
+      .intro {
+        margin: 35px 0 24px;
+      }
+
+      .portfolio-button {
+        margin-left: 0;
+      }
+
+      .services {
+        padding: 38px 22px 35px;
+      }
+
+      .service-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .service-card {
+        min-height: 128px;
+        padding: 30px;
+        border-radius: 30px;
+      }
+
+      .service-card h2 {
+        font-size: 18px;
+      }
+
+      .service-card p {
+        font-size: 12px;
+      }
+
+      footer {
+        font-size: 13px;
+        padding: 35px 22px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- NAVIGATION -->
+  <nav>
+    <a href="#home" aria-label="PEEMPDESIGNER home">
+      <img
+        class="logo"
+        src="https://www.figma.com/api/mcp/asset/efde8ea9-8862-495e-9c05-4ef4f3358d3a.png"
+        alt="PEEMP Designer logo"
+      />
+    </a>
+
+    <div class="nav-links">
+      <a href="#home" class="active">Home</a>
+      <a href="about.html">About</a>
+      <a href="portfolio.html">Portfolio</a>
+      <a href="contact.html">Contact</a>
+    </div>
+
+    <div class="nav-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle Theme">
+        <span id="themeIcon">🌙</span> <span id="themeText">Dark</span>
+      </button>
+      <button class="hire-button" onclick="location.href='contact.html'">
+        Hire Me
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main>
+    <!-- HERO SECTION -->
+    <section class="hero" id="home">
+      <img
+        class="hero-image reveal-image"
+        src="https://www.figma.com/api/mcp/asset/a11c8f86-5df9-4e70-8f6c-7645b6fecbf9.png"
+        alt="Graphic designer character"
+      />
+
+      <div class="hero-content reveal">
+        <h1>
+          CREATIVE
+          <br />
+          GRAPHIC
+          <span>DESIGNER</span>
+        </h1>
+
+        <p class="intro">
+          Hello! I'm Peter Mphundi, a graphic designer.
+        </p>
+
+        <button class="portfolio-button" onclick="location.href='portfolio.html'">
+          View portfolio
+        </button>
+      </div>
+    </section>
+
+    <!-- SERVICES SECTION -->
+    <section class="services reveal" id="services">
+      <h2 class="section-title">What I do</h2>
+
+      <img
+        class="section-line"
+        src="https://www.figma.com/api/mcp/asset/4c3764a1-d41c-420a-92a8-2bbf03805647.svg"
+        alt=""
+      />
+
+      <div class="service-grid reveal-stagger">
+        <article class="service-card logo-card">
+          <h2>Logo designer</h2>
+          <p>Modern, unique and memorable brand identities</p>
+        </article>
+
+        <article class="service-card brand-card">
+          <h2>Brand identity</h2>
+          <p>Complete branding packages for business</p>
+        </article>
+
+        <article class="service-card social-card">
+          <h2>Social Media Design</h2>
+          <p>Creative content for Facebook, Instagram and more</p>
+        </article>
+
+        <article class="service-card print-card">
+          <h2>Print Design</h2>
+          <p>Flyers, posters, business cards and brochures</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer id="contact">
+    © 2026 PEEMPDESIGNER | Graphic Designer
+  </footer>
+
+  <!-- JAVASCRIPT -->
+  <script>
+    // Theme Toggle Logic
+    const toggleBtn = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const themeText = document.getElementById('themeText');
+    const savedTheme = localStorage.getItem('theme');
+
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      setTheme('dark');
+    } else {
+      setTheme('light');
+    }
+
+    toggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    });
+
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('theme', t);
+      themeIcon.textContent = t === 'dark' ? '☀️' : '🌙';
+      themeText.textContent = t === 'dark' ? 'Light' : 'Dark';
+    }
+
+    // Scroll Animations
+    const revealElements = document.querySelectorAll(".reveal, .reveal-stagger, .reveal-image");
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      revealElements.forEach(element => element.classList.add("is-visible"));
+    } else {
+      const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          entry.target.classList.toggle("is-visible", entry.isIntersecting);
+        });
+      }, { threshold: 0.15 });
+
+      revealElements.forEach(element => revealObserver.observe(element));
+    }
+  </script>
+</body>
+</html>
