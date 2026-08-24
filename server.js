@@ -2,18 +2,21 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const nodemailer = require("nodemailer");
+const cookie = require("cookie");
+const crypto = require("crypto");
 
 require("dotenv").config();
 
-// Listen on 0.0.0.0 so Render's internal routing can reach your app
 const host = "0.0.0.0";
 const port = Number(process.env.PORT) || 3000;
 const publicDirectory = __dirname;
-
 const maxBodySize = 10000;
 const contactRateLimit = 5;
 const contactRateWindowMs = 15 * 60 * 1000;
 const requestCounts = new Map();
+
+// Active admin sessions stored in memory
+const activeSessions = new Set();
 
 const publicFiles = new Set([
     "about.html",
@@ -21,7 +24,8 @@ const publicFiles = new Set([
     "contact.html",
     "index.html",
     "portfolio.html",
-    "project.html"
+    "project.html",
+    "admin.html" // Added Admin Page
 ]);
 
 const mimeTypes = {
@@ -40,68 +44,53 @@ const mimeTypes = {
 function setSecurityHeaders(response) {
     response.setHeader("X-Content-Type-Options", "nosniff");
     response.setHeader("X-Frame-Options", "DENY");
-    response.setHeader(
-        "Referrer-Policy",
-        "strict-origin-when-cross-origin"
-    );
-
+    response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
     response.setHeader(
         "Content-Security-Policy",
         "default-src 'self'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.figma.com https://*.figma.com; form-action 'self'; frame-ancestors 'none'"
     );
-
     response.setHeader("Access-Control-Allow-Origin", "*");
-    response.setHeader(
-        "Access-Control-Allow-Methods",
-        "POST, GET, OPTIONS"
-    );
-    response.setHeader(
-        "Access-Control-Allow-Headers",
-        "Content-Type"
-    );
+    response.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+    response.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
 function getRequestProtocol(request) {
-    if (
-        process.env.TRUST_PROXY === "true" &&
-        request.headers["x-forwarded-proto"]
-    ) {
-        return request.headers["x-forwarded-proto"]
-            .split(",")[0]
-            .trim();
+    if (process.env.TRUST_PROXY === "true" && request.headers["x-forwarded-proto"]) {
+        return request.headers["x-forwarded-proto"].split(",")[0].trim();
     }
-
     return "http";
 }
 
 function sendJson(response, statusCode, payload, headers = {}) {
     setSecurityHeaders(response);
-
     response.writeHead(statusCode, {
         "Content-Type": "application/json; charset=utf-8",
         ...headers
     });
-
     response.end(JSON.stringify(payload));
+}
+
+function parseCookies(request) {
+    return cookie.parse(request.headers.cookie || "");
+}
+
+function isAuthenticated(request) {
+    const cookies = parseCookies(request);
+    return cookies.admin_session && activeSessions.has(cookies.admin_session);
 }
 
 function serveFile(response, filePath) {
     fs.stat(filePath, (statError, stats) => {
         if (statError || !stats.isFile()) {
-            sendJson(response, 404, {
-                error: "Not found"
-            });
+            sendJson(response, 404, { error: "Not found" });
             return;
         }
 
         const extension = path.extname(filePath).toLowerCase();
 
         setSecurityHeaders(response);
-
         response.writeHead(200, {
-            "Content-Type":
-                mimeTypes[extension] ||
-                "application/octet-stream",
+            "Content-Type": mimeTypes[extension] || "application/octet-stream",
             "Cache-Control": "no-cache"
         });
 
@@ -115,7 +104,6 @@ function readRequestBody(request) {
 
         request.on("data", chunk => {
             body += chunk;
-
             if (body.length > maxBodySize) {
                 reject(new Error("Request body too large"));
                 request.resume();
@@ -127,14 +115,9 @@ function readRequestBody(request) {
     });
 }
 
-
-/* =====================================================
-   GMAIL MAILER
-   ===================================================== */
-
 function createMailer() {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.error("EMAIL_USER or EMAIL_PASS is missing.");
+        console.error("Mailer Error: Missing EMAIL_USER or EMAIL_PASS.");
         return null;
     }
 
@@ -147,459 +130,158 @@ function createMailer() {
     });
 }
 
-
-/* =====================================================
-   CONTACT FORM
-   ===================================================== */
-
 async function handleContact(request, response) {
     try {
         if (request.headers["content-type"] !== "application/json") {
-            sendJson(response, 415, {
-                error: "JSON requests are required."
-            });
+            sendJson(response, 415, { error: "JSON requests are required." });
             return;
         }
 
-        const body = JSON.parse(
-            await readRequestBody(request)
-        );
+        const body = JSON.parse(await readRequestBody(request));
 
-        const name =
-            typeof body.name === "string"
-                ? body.name.trim()
-                : "";
+        const name = typeof body.name === "string" ? body.name.trim() : "";
+        const email = typeof body.email === "string" ? body.email.trim() : "";
+        const project = typeof body.project === "string" ? body.project.trim() : "";
+        const message = typeof body.message === "string" ? body.message.trim() : "";
+        const honeypot = typeof body.website === "string" ? body.website.trim() : "";
 
-        const email =
-            typeof body.email === "string"
-                ? body.email.trim()
-                : "";
-
-        const project =
-            typeof body.project === "string"
-                ? body.project.trim()
-                : "";
-
-        const message =
-            typeof body.message === "string"
-                ? body.message.trim()
-                : "";
-
-        const honeypot =
-            typeof body.website === "string"
-                ? body.website.trim()
-                : "";
-
-
-        /* Honeypot protection */
-
-        if (
-            honeypot ||
-            !name ||
-            !email ||
-            !project ||
-            !message
-        ) {
-            sendJson(response, 400, {
-                error:
-                    "Please complete all required fields."
-            });
-
+        if (honeypot || !name || !email || !project || !message) {
+            sendJson(response, 400, { error: "Please complete all required fields." });
             return;
         }
-
-
-        /* Length validation */
-
-        if (
-            name.length > 80 ||
-            email.length > 120 ||
-            project.length > 80 ||
-            message.length > 2000
-        ) {
-            sendJson(response, 400, {
-                error:
-                    "One or more fields are too long."
-            });
-
-            return;
-        }
-
-
-        /* Allowed project types */
-
-        const allowedProjects = new Set([
-            "Brand Identity",
-            "Logo Design",
-            "Poster Design",
-            "Social Media Design",
-            "Website Design",
-            "Other"
-        ]);
-
-        if (!allowedProjects.has(project)) {
-            sendJson(response, 400, {
-                error:
-                    "Please select a valid project type."
-            });
-
-            return;
-        }
-
-
-        /* Email validation */
-
-        const emailPattern =
-            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        if (!emailPattern.test(email)) {
-            sendJson(response, 400, {
-                error:
-                    "Please enter a valid email address."
-            });
-
-            return;
-        }
-
-
-        /* Unsafe character validation */
-
-        const unsafePattern =
-            /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/;
-
-        if (
-            unsafePattern.test(name) ||
-            unsafePattern.test(email) ||
-            unsafePattern.test(message)
-        ) {
-            sendJson(response, 400, {
-                error:
-                    "Please enter valid text."
-            });
-
-            return;
-        }
-
-
-        /* Create Gmail transporter */
 
         const mailer = createMailer();
-
         if (!mailer || !process.env.EMAIL_TO) {
-            console.error(
-                "Mailer Error: Configuration incomplete. Check environment variables."
-            );
-
-            sendJson(response, 503, {
-                error:
-                    "Email service configuration is missing on the server."
-            });
-
+            sendJson(response, 503, { error: "Email service not configured." });
             return;
         }
-
-
-        /* Send email */
 
         const info = await mailer.sendMail({
-            from: process.env.EMAIL_USER.trim(),
-
+            from: process.env.EMAIL_USER,
             to: process.env.EMAIL_TO.trim(),
-
             replyTo: email,
-
-            subject:
-                `${project} inquiry from ${name}`,
-
-            text:
-                `Name: ${name}\n` +
-                `Email: ${email}\n` +
-                `Project: ${project}\n\n` +
-                `Message:\n${message}`
+            subject: `${project} inquiry from ${name}`,
+            text: `Name: ${name}\nEmail: ${email}\nProject: ${project}\n\nMessage:\n${message}`
         });
 
-
-        console.log(
-            "Email sent successfully! Message ID:",
-            info.messageId
-        );
-
-
-        sendJson(response, 200, {
-            success: true,
-            message:
-                "Your message was sent successfully."
-        });
+        console.log("Email sent successfully! ID:", info.messageId);
+        sendJson(response, 200, { success: true, message: "Your message was sent successfully." });
 
     } catch (error) {
-
-        if (
-            error.message ===
-            "Request body too large"
-        ) {
-            sendJson(response, 413, {
-                error:
-                    "Request body too large."
-            });
-
-            return;
-        }
-
-
-        if (error instanceof SyntaxError) {
-            sendJson(response, 400, {
-                error:
-                    "Invalid request."
-            });
-
-            return;
-        }
-
-
-        console.error(
-            "Contact form processing error:",
-            error
-        );
-
-
-        sendJson(response, 500, {
-            error:
-                error.message ||
-                "Unable to send the message."
-        });
+        console.error("Contact error:", error);
+        sendJson(response, 500, { error: error.message || "Unable to send message." });
     }
 }
 
+const server = http.createServer(async (request, response) => {
+    response.setTimeout(15000, () => response.destroy());
 
-/* =====================================================
-   SERVER
-   ===================================================== */
-
-const server = http.createServer(
-    async (request, response) => {
-
-        response.setTimeout(15000, () => {
-            response.destroy();
-        });
-
-
-        /* CORS preflight */
-
-        if (request.method === "OPTIONS") {
-
-            setSecurityHeaders(response);
-
-            response.writeHead(204);
-
-            response.end();
-
-            return;
-        }
-
-
-        /* Request URL */
-
-        const protocol =
-            getRequestProtocol(request);
-
-        const baseUrl =
-            `${protocol}://${request.headers.host || `0.0.0.0:${port}`}`;
-
-        const requestPath =
-            new URL(
-                request.url,
-                baseUrl
-            ).pathname;
-
-
+    if (request.method === "OPTIONS") {
         setSecurityHeaders(response);
+        response.writeHead(204);
+        response.end();
+        return;
+    }
 
+    const protocol = getRequestProtocol(request);
+    const baseUrl = `${protocol}://${request.headers.host || `0.0.0.0:${port}`}`;
+    const requestPath = new URL(request.url, baseUrl).pathname;
 
-        /* =================================================
-           RATE LIMITING
-           ================================================= */
+    setSecurityHeaders(response);
 
-        if (
-            requestPath === "/api/contact" &&
-            request.method === "POST"
-        ) {
+    // Rate Limiting for Contact Form
+    if (requestPath === "/api/contact" && request.method === "POST") {
+        const clientIp = request.headers["x-forwarded-for"] || request.socket.remoteAddress || "unknown";
+        const now = Date.now();
+        const recentRequests = (requestCounts.get(clientIp) || []).filter(
+            timestamp => now - timestamp < contactRateWindowMs
+        );
 
-            const clientIp =
-                request.headers["x-forwarded-for"] ||
-                request.socket.remoteAddress ||
-                "unknown";
+        if (recentRequests.length >= contactRateLimit) {
+            sendJson(response, 429, { error: "Too many requests." });
+            return;
+        }
+        recentRequests.push(now);
+        requestCounts.set(clientIp, recentRequests);
+    }
 
-            const now = Date.now();
+    // --- ADMIN API ROUTES ---
+    if (request.method === "POST" && requestPath === "/api/admin/login") {
+        try {
+            const body = JSON.parse(await readRequestBody(request));
+            if (body.username === process.env.ADMIN_USER && body.password === process.env.ADMIN_PASS) {
+                const sessionId = crypto.randomBytes(32).toString("hex");
+                activeSessions.add(sessionId);
 
-            const recentRequests =
-                (
-                    requestCounts.get(clientIp) || []
-                ).filter(
-                    timestamp =>
-                        now - timestamp <
-                        contactRateWindowMs
-                );
+                const cookieHeader = cookie.serialize("admin_session", sessionId, {
+                    httpOnly: true,
+                    path: "/",
+                    sameSite: "strict",
+                    maxAge: 60 * 60 * 24 // 24 hours
+                });
 
-
-            if (
-                recentRequests.length >=
-                contactRateLimit
-            ) {
-
-                sendJson(
-                    response,
-                    429,
-                    {
-                        error:
-                            "Too many requests. Please try again later."
-                    },
-                    {
-                        "Retry-After":
-                            String(
-                                Math.ceil(
-                                    contactRateWindowMs /
-                                    1000
-                                )
-                            )
-                    }
-                );
-
-                return;
+                sendJson(response, 200, { success: true }, { "Set-Cookie": cookieHeader });
+            } else {
+                sendJson(response, 401, { error: "Invalid admin credentials." });
             }
-
-
-            recentRequests.push(now);
-
-            requestCounts.set(
-                clientIp,
-                recentRequests
-            );
+        } catch (e) {
+            sendJson(response, 400, { error: "Invalid request payload." });
         }
-
-
-        /* =================================================
-           CONTACT API
-           ================================================= */
-
-        if (
-            request.method === "POST" &&
-            requestPath === "/api/contact"
-        ) {
-
-            await handleContact(
-                request,
-                response
-            );
-
-            return;
-        }
-
-
-        /* =================================================
-           HEALTH CHECK
-           ================================================= */
-
-        if (
-            requestPath === "/api/health" ||
-            requestPath === "/healthz"
-        ) {
-
-            sendJson(response, 200, {
-                status: "ok"
-            });
-
-            return;
-        }
-
-
-        /* =================================================
-           REQUEST METHOD
-           ================================================= */
-
-        if (
-            request.method !== "GET" &&
-            request.method !== "HEAD"
-        ) {
-
-            sendJson(response, 405, {
-                error:
-                    "Method not allowed"
-            });
-
-            return;
-        }
-
-
-        /* =================================================
-           STATIC FILES
-           ================================================= */
-
-        const requestedFile =
-            requestPath === "/"
-                ? "index.html"
-                : decodeURIComponent(
-                    requestPath.slice(1)
-                );
-
-        const isImageAsset =
-            requestedFile.startsWith("images/");
-
-
-        if (
-            !publicFiles.has(requestedFile) &&
-            !isImageAsset
-        ) {
-
-            sendJson(response, 404, {
-                error: "Not found"
-            });
-
-            return;
-        }
-
-
-        const filePath =
-            path.resolve(
-                publicDirectory,
-                requestedFile
-            );
-
-
-        /* Security: prevent path traversal */
-
-        if (
-            filePath !== publicDirectory &&
-            !filePath.startsWith(
-                publicDirectory + path.sep
-            )
-        ) {
-
-            sendJson(response, 403, {
-                error: "Forbidden"
-            });
-
-            return;
-        }
-
-
-        serveFile(
-            response,
-            filePath
-        );
+        return;
     }
-);
 
-
-/* =====================================================
-   START SERVER
-   ===================================================== */
-
-server.listen(
-    port,
-    host,
-    () => {
-        console.log(
-            `PEEMPDESIGNER server running on port ${port}`
-        );
+    if (request.method === "POST" && requestPath === "/api/admin/logout") {
+        const cookies = parseCookies(request);
+        if (cookies.admin_session) {
+            activeSessions.delete(cookies.admin_session);
+        }
+        const cookieHeader = cookie.serialize("admin_session", "", {
+            httpOnly: true,
+            path: "/",
+            maxAge: 0
+        });
+        sendJson(response, 200, { success: true }, { "Set-Cookie": cookieHeader });
+        return;
     }
-);
+
+    if (request.method === "GET" && requestPath === "/api/admin/dashboard") {
+        if (!isAuthenticated(request)) {
+            sendJson(response, 401, { error: "Unauthorized access." });
+            return;
+        }
+        sendJson(response, 200, { message: "Authenticated successfully." });
+        return;
+    }
+
+    // --- STANDARD API ROUTES ---
+    if (request.method === "POST" && requestPath === "/api/contact") {
+        await handleContact(request, response);
+        return;
+    }
+
+    if (requestPath === "/api/health" || requestPath === "/healthz") {
+        sendJson(response, 200, { status: "ok" });
+        return;
+    }
+
+    // Static File Serving
+    if (request.method !== "GET" && request.method !== "HEAD") {
+        sendJson(response, 405, { error: "Method not allowed" });
+        return;
+    }
+
+    const requestedFile = requestPath === "/" ? "index.html" : decodeURIComponent(requestPath.slice(1));
+    const isImageAsset = requestedFile.startsWith("images/");
+
+    if (!publicFiles.has(requestedFile) && !isImageAsset) {
+        sendJson(response, 404, { error: "Not found" });
+        return;
+    }
+
+    const filePath = path.resolve(publicDirectory, requestedFile);
+    serveFile(response, filePath);
+});
+
+server.listen(port, host, () => {
+    console.log(`PEEMPDESIGNER server running on port ${port}`);
+});
