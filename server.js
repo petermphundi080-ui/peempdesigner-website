@@ -5,7 +5,8 @@ const nodemailer = require("nodemailer");
 
 require("dotenv").config();
 
-const host = "127.0.0.1";
+// Listen on 0.0.0.0 so Render's internal routing can reach your app
+const host = "0.0.0.0";
 const port = Number(process.env.PORT) || 3000;
 const publicDirectory = __dirname;
 const maxBodySize = 10000;
@@ -19,7 +20,7 @@ const publicFiles = new Set([
     "contact.html",
     "index.html",
     "portfolio.html",
-        "project.html"
+    "project.html"
 ]);
 
 const mimeTypes = {
@@ -43,13 +44,16 @@ function setSecurityHeaders(response) {
         "Content-Security-Policy",
         "default-src 'self'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.figma.com https://*.figma.com; form-action 'self'; frame-ancestors 'none'"
     );
+    // Allow GitHub Pages frontend to make requests to this backend
+    response.setHeader("Access-Control-Allow-Origin", "*");
+    response.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+    response.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
 function getRequestProtocol(request) {
     if (process.env.TRUST_PROXY === "true" && request.headers["x-forwarded-proto"]) {
         return request.headers["x-forwarded-proto"].split(",")[0].trim();
     }
-
     return "http";
 }
 
@@ -59,7 +63,6 @@ function sendJson(response, statusCode, payload, headers = {}) {
         "Content-Type": "application/json; charset=utf-8",
         ...headers
     });
-
     response.end(JSON.stringify(payload));
 }
 
@@ -74,8 +77,7 @@ function serveFile(response, filePath) {
 
         setSecurityHeaders(response);
         response.writeHead(200, {
-            "Content-Type":
-                mimeTypes[extension] || "application/octet-stream",
+            "Content-Type": mimeTypes[extension] || "application/octet-stream",
             "Cache-Control": "no-cache"
         });
 
@@ -89,7 +91,6 @@ function readRequestBody(request) {
 
         request.on("data", chunk => {
             body += chunk;
-
             if (body.length > maxBodySize) {
                 reject(new Error("Request body too large"));
                 request.resume();
@@ -130,22 +131,12 @@ async function handleContact(request, response) {
 
         const body = JSON.parse(await readRequestBody(request));
 
-        const name =
-            typeof body.name === "string" ? body.name.trim() : "";
+        const name = typeof body.name === "string" ? body.name.trim() : "";
+        const email = typeof body.email === "string" ? body.email.trim() : "";
+        const project = typeof body.project === "string" ? body.project.trim() : "";
+        const message = typeof body.message === "string" ? body.message.trim() : "";
+        const honeypot = typeof body.website === "string" ? body.website.trim() : "";
 
-        const email =
-            typeof body.email === "string" ? body.email.trim() : "";
-
-        const project =
-            typeof body.project === "string" ? body.project.trim() : "";
-
-        const message =
-            typeof body.message === "string" ? body.message.trim() : "";
-
-        const honeypot =
-            typeof body.website === "string" ? body.website.trim() : "";
-
-        // Spam / required field check
         if (honeypot || !name || !email || !project || !message) {
             sendJson(response, 400, {
                 error: "Please complete all required fields."
@@ -153,7 +144,6 @@ async function handleContact(request, response) {
             return;
         }
 
-        // Length validation
         if (
             name.length > 80 ||
             email.length > 120 ||
@@ -180,9 +170,7 @@ async function handleContact(request, response) {
             return;
         }
 
-        // Correct email validation
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
         if (!emailPattern.test(email)) {
             sendJson(response, 400, {
                 error: "Please enter a valid email address."
@@ -191,7 +179,6 @@ async function handleContact(request, response) {
         }
 
         const mailer = createMailer();
-
         if (!mailer || !process.env.EMAIL_TO) {
             sendJson(response, 503, {
                 error: "Email service is not configured yet."
@@ -199,23 +186,16 @@ async function handleContact(request, response) {
             return;
         }
 
-      const info = await mailer.sendMail({
-    from: process.env.EMAIL_USER,
-    to: process.env.EMAIL_TO,
-    replyTo: email,
-    subject: `${project} inquiry from ${name}`,
-    text: `Name: ${name}
-Email: ${email}
-Project: ${project}
+        const info = await mailer.sendMail({
+            from: process.env.EMAIL_USER,
+            to: process.env.EMAIL_TO,
+            replyTo: email,
+            subject: `${project} inquiry from ${name}`,
+            text: `Name: ${name}\nEmail: ${email}\nProject: ${project}\n\nMessage:\n${message}`
+        });
 
-Message:
-${message}`
-});
-
-console.log("Email sent!");
-console.log("Message ID:", info.messageId);
-console.log("Sent to:", process.env.EMAIL_TO);
-console.log("Response:", info.response);
+        console.log("Email sent!");
+        console.log("Message ID:", info.messageId);
 
         sendJson(response, 200, {
             success: true,
@@ -224,58 +204,40 @@ console.log("Response:", info.response);
 
     } catch (error) {
         if (error.message === "Request body too large") {
-            sendJson(response, 413, {
-                error: "Request body too large."
-            });
+            sendJson(response, 413, { error: "Request body too large." });
             return;
         }
 
         if (error instanceof SyntaxError) {
-            sendJson(response, 400, {
-                error: "Invalid request."
-            });
+            sendJson(response, 400, { error: "Invalid request." });
             return;
         }
 
         console.error("Contact form error:", error.message);
-
-        sendJson(response, 500, {
-            error: "Unable to send the message."
-        });
+        sendJson(response, 500, { error: "Unable to send the message." });
     }
 }
 
 const server = http.createServer(async (request, response) => {
-
     response.setTimeout(15000, () => response.destroy());
 
-    const protocol = getRequestProtocol(request);
-    const baseUrl = `${protocol}://${request.headers.host || `${host}:${port}`}`;
+    // Handle preflight CORS requests
+    if (request.method === "OPTIONS") {
+        setSecurityHeaders(response);
+        response.writeHead(204);
+        response.end();
+        return;
+    }
 
-    const requestPath = new URL(
-        request.url,
-        baseUrl
-    ).pathname;
+    const protocol = getRequestProtocol(request);
+    const baseUrl = `${protocol}://${request.headers.host || `0.0.0.0:${port}`}`;
+    const requestPath = new URL(request.url, baseUrl).pathname;
 
     setSecurityHeaders(response);
 
-    if (protocol === "https") {
-        response.setHeader(
-            "Strict-Transport-Security",
-            "max-age=31536000; includeSubDomains"
-        );
-    }
-
+    // Rate limiting for contact route
     if (requestPath === "/api/contact" && request.method === "POST") {
-        const origin = request.headers.origin;
-        const expectedOrigin = `${protocol}://${request.headers.host || `${host}:${port}`}`;
-
-        if (origin && origin !== expectedOrigin) {
-            sendJson(response, 403, { error: "Request origin is not allowed." });
-            return;
-        }
-
-        const clientIp = request.socket.remoteAddress || "unknown";
+        const clientIp = request.headers["x-forwarded-for"] || request.socket.remoteAddress || "unknown";
         const now = Date.now();
         const recentRequests = (requestCounts.get(clientIp) || []).filter(
             timestamp => now - timestamp < contactRateWindowMs
@@ -292,48 +254,27 @@ const server = http.createServer(async (request, response) => {
 
         recentRequests.push(now);
         requestCounts.set(clientIp, recentRequests);
-
-        if (requestCounts.size > 10000) {
-            for (const [ip, timestamps] of requestCounts) {
-                if (!timestamps.some(timestamp => now - timestamp < contactRateWindowMs)) {
-                    requestCounts.delete(ip);
-                }
-            }
-        }
     }
 
     // Contact API
-    if (
-        request.method === "POST" &&
-        requestPath === "/api/contact"
-    ) {
+    if (request.method === "POST" && requestPath === "/api/contact") {
         await handleContact(request, response);
         return;
     }
 
-    // Only allow GET and HEAD for normal files
-    if (
-        request.method !== "GET" &&
-        request.method !== "HEAD"
-    ) {
-        sendJson(response, 405, {
-            error: "Method not allowed"
-        });
+    // Health check endpoint for Render
+    if (requestPath === "/api/health" || requestPath === "/healthz") {
+        sendJson(response, 200, { status: "ok" });
         return;
     }
 
-    // Health check
-    if (requestPath === "/api/health") {
-        sendJson(response, 200, {
-            status: "ok"
-        });
+    // Static file serving fallback
+    if (request.method !== "GET" && request.method !== "HEAD") {
+        sendJson(response, 405, { error: "Method not allowed" });
         return;
     }
 
-    const requestedFile = requestPath === "/"
-        ? "index.html"
-        : decodeURIComponent(requestPath.slice(1));
-
+    const requestedFile = requestPath === "/" ? "index.html" : decodeURIComponent(requestPath.slice(1));
     const isImageAsset = requestedFile.startsWith("images/");
 
     if (!publicFiles.has(requestedFile) && !isImageAsset) {
@@ -341,43 +282,10 @@ const server = http.createServer(async (request, response) => {
         return;
     }
 
-    const filePath = path.resolve(
-        publicDirectory,
-        requestedFile
-    );
+    const filePath = path.resolve(publicDirectory, requestedFile);
 
-    // Prevent accessing files outside the website folder
-    if (
-        filePath !== publicDirectory &&
-        !filePath.startsWith(publicDirectory + path.sep)
-    ) {
-        sendJson(response, 403, {
-            error: "Forbidden"
-        });
-        return;
-    }
-
-    // HEAD request
-    if (request.method === "HEAD") {
-        fs.stat(filePath, (statError, stats) => {
-            if (statError || !stats.isFile()) {
-                sendJson(response, 404, {
-                    error: "Not found"
-                });
-                return;
-            }
-
-            setSecurityHeaders(response);
-            response.writeHead(200, {
-                "Content-Type":
-                    mimeTypes[
-                        path.extname(filePath).toLowerCase()
-                    ] || "application/octet-stream"
-            });
-
-            response.end();
-        });
-
+    if (filePath !== publicDirectory && !filePath.startsWith(publicDirectory + path.sep)) {
+        sendJson(response, 403, { error: "Forbidden" });
         return;
     }
 
@@ -385,7 +293,5 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.listen(port, host, () => {
-    console.log(
-        `PEEMPDESIGNER server running at http://${host}:${port}`
-    );
+    console.log(`PEEMPDESIGNER server running on port ${port}`);
 });
