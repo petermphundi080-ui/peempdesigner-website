@@ -44,7 +44,7 @@ function setSecurityHeaders(response) {
         "Content-Security-Policy",
         "default-src 'self'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.figma.com https://*.figma.com; form-action 'self'; frame-ancestors 'none'"
     );
-    // Allow GitHub Pages frontend to make requests to this backend
+    // Allow frontend to communicate with this backend
     response.setHeader("Access-Control-Allow-Origin", "*");
     response.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
     response.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -104,20 +104,16 @@ function readRequestBody(request) {
 
 function createMailer() {
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.error("Mailer Error: EMAIL_USER or EMAIL_PASS environment variable is missing.");
         return null;
     }
 
+    // Switched to built-in Gmail service to bypass port 587 cloud firewall blocks
     return nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 587,
-        secure: false,
+        service: "gmail",
         auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        },
-        tls: {
-            minVersion: "TLSv1.2",
-            rejectUnauthorized: true
+            user: process.env.EMAIL_USER.trim(),
+            pass: process.env.EMAIL_PASS.trim()
         }
     });
 }
@@ -180,22 +176,22 @@ async function handleContact(request, response) {
 
         const mailer = createMailer();
         if (!mailer || !process.env.EMAIL_TO) {
+            console.error("Mailer Error: Configuration incomplete. Check environment variables.");
             sendJson(response, 503, {
-                error: "Email service is not configured yet."
+                error: "Email service configuration is missing on the server."
             });
             return;
         }
 
         const info = await mailer.sendMail({
             from: process.env.EMAIL_USER,
-            to: process.env.EMAIL_TO,
+            to: process.env.EMAIL_TO.trim(),
             replyTo: email,
             subject: `${project} inquiry from ${name}`,
             text: `Name: ${name}\nEmail: ${email}\nProject: ${project}\n\nMessage:\n${message}`
         });
 
-        console.log("Email sent!");
-        console.log("Message ID:", info.messageId);
+        console.log("Email sent successfully! Message ID:", info.messageId);
 
         sendJson(response, 200, {
             success: true,
@@ -213,8 +209,9 @@ async function handleContact(request, response) {
             return;
         }
 
-        console.error("Contact form error:", error.message);
-        sendJson(response, 500, { error: "Unable to send the message." });
+        // Output full detailed error stack to Render logs for easy debugging
+        console.error("Contact form processing error:", error);
+        sendJson(response, 500, { error: error.message || "Unable to send the message." });
     }
 }
 
@@ -256,7 +253,7 @@ const server = http.createServer(async (request, response) => {
         requestCounts.set(clientIp, recentRequests);
     }
 
-    // Contact API
+    // Contact API Route
     if (request.method === "POST" && requestPath === "/api/contact") {
         await handleContact(request, response);
         return;
