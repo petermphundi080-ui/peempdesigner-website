@@ -4,6 +4,10 @@ const path = require("path");
 const nodemailer = require("nodemailer");
 const cookie = require("cookie");
 const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
+const usersStore = require("./lib/usersStore");
+const contentStore = require("./lib/contentStore");
+const pageContentStore = require("./lib/pageContentStore");
 
 require("dotenv").config();
 
@@ -15,8 +19,14 @@ const contactRateLimit = 5;
 const contactRateWindowMs = 15 * 60 * 1000;
 const requestCounts = new Map();
 
-// Active admin sessions stored in memory
-const activeSessions = new Set();
+// Active admin sessions stored in memory: sessionId -> expiry timestamp
+const activeSessions = new Map();
+const SESSION_DURATION_MS = 60 * 60 * 24 * 1000; // 24 hours
+
+// Separate, stricter rate limiter for admin login attempts
+const adminLoginAttempts = new Map();
+const adminLoginLimit = 5;
+const adminLoginWindowMs = 15 * 60 * 1000;
 
 const publicFiles = new Set([
     "about.html",
@@ -50,7 +60,7 @@ function setSecurityHeaders(response) {
         "default-src 'self'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.figma.com https://*.figma.com; form-action 'self'; frame-ancestors 'none'"
     );
     response.setHeader("Access-Control-Allow-Origin", "*");
-    response.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+    response.setHeader("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS");
     response.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
@@ -76,7 +86,33 @@ function parseCookies(request) {
 
 function isAuthenticated(request) {
     const cookies = parseCookies(request);
-    return cookies.admin_session && activeSessions.has(cookies.admin_session);
+    const sessionId = cookies.admin_session;
+    if (!sessionId || !activeSessions.has(sessionId)) return false;
+
+    const expiry = activeSessions.get(sessionId);
+    if (Date.now() > expiry) {
+        activeSessions.delete(sessionId);
+        return false;
+    }
+    return true;
+}
+
+// Clean up expired sessions periodically so the Map doesn't grow forever
+setInterval(() => {
+    const now = Date.now();
+    for (const [id, expiry] of activeSessions) {
+        if (now > expiry) activeSessions.delete(id);
+    }
+}, 60 * 60 * 1000); // every hour
+
+function isAdminLoginRateLimited(clientIp) {
+    const now = Date.now();
+    const attempts = (adminLoginAttempts.get(clientIp) || []).filter(
+        t => now - t < adminLoginWindowMs
+    );
+    attempts.push(now);
+    adminLoginAttempts.set(clientIp, attempts);
+    return attempts.length > adminLoginLimit;
 }
 
 function serveFile(response, filePath) {
@@ -123,6 +159,16 @@ function createMailer() {
 
     return nodemailer.createTransport({
         service: "gmail",
+        // CRITICAL FIX: force IPv4. Some hosts (including Render) resolve
+        // smtp.gmail.com to an IPv6 address but cannot route outbound IPv6,
+        // so the TCP connection silently hangs forever. Forcing IPv4 makes
+        // the connection succeed immediately.
+        family: 4,
+        // Fail fast with a clear error instead of hanging until the HTTP
+        // response timeout destroys the connection (which caused 502s).
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 20000,
         auth: {
             user: process.env.EMAIL_USER.trim(),
             pass: process.env.EMAIL_PASS.trim()
@@ -160,7 +206,8 @@ async function handleContact(request, response) {
             from: process.env.EMAIL_USER,
             to: process.env.EMAIL_TO.trim(),
             replyTo: email,
-            subject: `${project} inquiry from ${name}`,
+            // Strip CR/LF so user input can never inject extra email headers.
+            subject: `${project.replace(/[\r\n]+/g, " ")} inquiry from ${name.replace(/[\r\n]+/g, " ")}`,
             text: `Name: ${name}\nEmail: ${email}\nProject: ${project}\n\nMessage:\n${message}`
         });
 
@@ -173,8 +220,159 @@ async function handleContact(request, response) {
     }
 }
 
+// --- USERS CRUD HANDLERS (admin only) ---
+
+function handleGetUsers(request, response) {
+    if (!isAuthenticated(request)) {
+        sendJson(response, 401, { error: "Unauthorized access." });
+        return;
+    }
+    const users = usersStore.getAllUsers();
+    sendJson(response, 200, { users });
+}
+
+async function handleCreateUser(request, response) {
+    if (!isAuthenticated(request)) {
+        sendJson(response, 401, { error: "Unauthorized access." });
+        return;
+    }
+    try {
+        const body = JSON.parse(await readRequestBody(request));
+        const newUser = usersStore.createUser(body);
+        sendJson(response, 201, { success: true, user: newUser });
+    } catch (err) {
+        sendJson(response, 400, { error: err.message || "Unable to create user." });
+    }
+}
+
+async function handleUpdateUser(request, response, userId) {
+    if (!isAuthenticated(request)) {
+        sendJson(response, 401, { error: "Unauthorized access." });
+        return;
+    }
+    try {
+        const body = JSON.parse(await readRequestBody(request));
+        const updated = usersStore.updateUser(userId, body);
+        sendJson(response, 200, { success: true, user: updated });
+    } catch (err) {
+        const status = err.message === "User not found." ? 404 : 400;
+        sendJson(response, status, { error: err.message || "Unable to update user." });
+    }
+}
+
+function handleDeleteUser(request, response, userId) {
+    if (!isAuthenticated(request)) {
+        sendJson(response, 401, { error: "Unauthorized access." });
+        return;
+    }
+    try {
+        usersStore.deleteUser(userId);
+        sendJson(response, 200, { success: true });
+    } catch (err) {
+        sendJson(response, 404, { error: err.message || "User not found." });
+    }
+}
+
+// --- CONTENT CRUD HANDLERS (admin only) ---
+
+function handleGetContent(request, response) {
+    if (!isAuthenticated(request)) {
+        sendJson(response, 401, { error: "Unauthorized access." });
+        return;
+    }
+    const items = contentStore.getAllContent();
+    sendJson(response, 200, { content: items });
+}
+
+async function handleCreateContent(request, response) {
+    if (!isAuthenticated(request)) {
+        sendJson(response, 401, { error: "Unauthorized access." });
+        return;
+    }
+    try {
+        const body = JSON.parse(await readRequestBody(request));
+        const newItem = contentStore.createContent(body);
+        sendJson(response, 201, { success: true, content: newItem });
+    } catch (err) {
+        sendJson(response, 400, { error: err.message || "Unable to create content." });
+    }
+}
+
+async function handleUpdateContent(request, response, contentId) {
+    if (!isAuthenticated(request)) {
+        sendJson(response, 401, { error: "Unauthorized access." });
+        return;
+    }
+    try {
+        const body = JSON.parse(await readRequestBody(request));
+        const updated = contentStore.updateContent(contentId, body);
+        sendJson(response, 200, { success: true, content: updated });
+    } catch (err) {
+        const status = err.message === "Content item not found." ? 404 : 400;
+        sendJson(response, status, { error: err.message || "Unable to update content." });
+    }
+}
+
+function handleDeleteContent(request, response, contentId) {
+    if (!isAuthenticated(request)) {
+        sendJson(response, 401, { error: "Unauthorized access." });
+        return;
+    }
+    try {
+        contentStore.deleteContent(contentId);
+        sendJson(response, 200, { success: true });
+    } catch (err) {
+        sendJson(response, 404, { error: err.message || "Content not found." });
+    }
+}
+
+// --- PAGE CONTENT (About, Portfolio, etc.) ---
+
+// Public route: any visitor's browser calls this to fill in the page text.
+// No login required, since the whole site needs to read it.
+function handleGetPublicPage(request, response, pageName) {
+    try {
+        const content = pageContentStore.getPageContent(pageName);
+        sendJson(response, 200, { content });
+    } catch (err) {
+        sendJson(response, 404, { error: "Page not found." });
+    }
+}
+
+// Admin route: returns content + which fields are editable, for the admin UI
+function handleGetAdminPage(request, response, pageName) {
+    if (!isAuthenticated(request)) {
+        sendJson(response, 401, { error: "Unauthorized access." });
+        return;
+    }
+    const schema = pageContentStore.getPageSchema(pageName);
+    if (!schema) {
+        sendJson(response, 404, { error: "Page not found." });
+        return;
+    }
+    const content = pageContentStore.getPageContent(pageName);
+    sendJson(response, 200, { fields: schema, content });
+}
+
+async function handleUpdatePage(request, response, pageName) {
+    if (!isAuthenticated(request)) {
+        sendJson(response, 401, { error: "Unauthorized access." });
+        return;
+    }
+    try {
+        const body = JSON.parse(await readRequestBody(request));
+        const updated = pageContentStore.updatePageContent(pageName, body);
+        sendJson(response, 200, { success: true, content: updated });
+    } catch (err) {
+        sendJson(response, 400, { error: err.message || "Unable to update page." });
+    }
+}
+
 const server = http.createServer(async (request, response) => {
-    response.setTimeout(15000, () => response.destroy());
+    // Allow enough time for a complete SMTP handshake + delivery before
+    // giving up (the old 15s limit killed slow-but-working email attempts).
+    const responseTimeoutMs = Number(process.env.RESPONSE_TIMEOUT_MS) || 30000;
+    response.setTimeout(responseTimeoutMs, () => response.destroy());
 
     if (request.method === "OPTIONS") {
         setSecurityHeaders(response);
@@ -207,16 +405,32 @@ const server = http.createServer(async (request, response) => {
 
     // --- ADMIN API ROUTES ---
     if (request.method === "POST" && requestPath === "/api/admin/login") {
+        const clientIp = request.headers["x-forwarded-for"] || request.socket.remoteAddress || "unknown";
+
+        if (isAdminLoginRateLimited(clientIp)) {
+            sendJson(response, 429, { error: "Too many login attempts. Try again later." });
+            return;
+        }
+
         try {
             const body = JSON.parse(await readRequestBody(request));
-            if (body.username === process.env.ADMIN_USER && body.password === process.env.ADMIN_PASS) {
+            const username = typeof body.username === "string" ? body.username : "";
+            const password = typeof body.password === "string" ? body.password : "";
+
+            const usernameMatches = username === process.env.ADMIN_USER;
+            const passwordMatches = usernameMatches
+                ? await bcrypt.compare(password, process.env.ADMIN_PASS_HASH)
+                : false;
+
+            if (usernameMatches && passwordMatches) {
                 const sessionId = crypto.randomBytes(32).toString("hex");
-                activeSessions.add(sessionId);
+                activeSessions.set(sessionId, Date.now() + SESSION_DURATION_MS);
 
                 const cookieHeader = cookie.serialize("admin_session", sessionId, {
                     httpOnly: true,
                     path: "/",
                     sameSite: "strict",
+                    secure: process.env.NODE_ENV === "production",
                     maxAge: 60 * 60 * 24 // 24 hours
                 });
 
@@ -238,6 +452,8 @@ const server = http.createServer(async (request, response) => {
         const cookieHeader = cookie.serialize("admin_session", "", {
             httpOnly: true,
             path: "/",
+            sameSite: "strict",
+            secure: process.env.NODE_ENV === "production",
             maxAge: 0
         });
         sendJson(response, 200, { success: true }, { "Set-Cookie": cookieHeader });
@@ -250,6 +466,74 @@ const server = http.createServer(async (request, response) => {
             return;
         }
         sendJson(response, 200, { message: "Authenticated successfully." });
+        return;
+    }
+
+    // --- USERS API ROUTES ---
+    // Matches /api/admin/users and /api/admin/users/<id>
+    const usersListMatch = requestPath === "/api/admin/users";
+    const usersItemMatch = requestPath.match(/^\/api\/admin\/users\/([a-zA-Z0-9]+)$/);
+
+    if (usersListMatch && request.method === "GET") {
+        handleGetUsers(request, response);
+        return;
+    }
+
+    if (usersListMatch && request.method === "POST") {
+        await handleCreateUser(request, response);
+        return;
+    }
+
+    if (usersItemMatch && request.method === "PUT") {
+        await handleUpdateUser(request, response, usersItemMatch[1]);
+        return;
+    }
+
+    if (usersItemMatch && request.method === "DELETE") {
+        handleDeleteUser(request, response, usersItemMatch[1]);
+        return;
+    }
+
+    // --- CONTENT API ROUTES ---
+    // Matches /api/admin/content and /api/admin/content/<id>
+    const contentListMatch = requestPath === "/api/admin/content";
+    const contentItemMatch = requestPath.match(/^\/api\/admin\/content\/([a-zA-Z0-9]+)$/);
+
+    if (contentListMatch && request.method === "GET") {
+        handleGetContent(request, response);
+        return;
+    }
+
+    if (contentListMatch && request.method === "POST") {
+        await handleCreateContent(request, response);
+        return;
+    }
+
+    if (contentItemMatch && request.method === "PUT") {
+        await handleUpdateContent(request, response, contentItemMatch[1]);
+        return;
+    }
+
+    if (contentItemMatch && request.method === "DELETE") {
+        handleDeleteContent(request, response, contentItemMatch[1]);
+        return;
+    }
+
+    // --- PUBLIC PAGE CONTENT ROUTE ---
+    const publicPageMatch = requestPath.match(/^\/api\/pages\/([a-z0-9_-]+)$/);
+    if (publicPageMatch && request.method === "GET") {
+        handleGetPublicPage(request, response, publicPageMatch[1]);
+        return;
+    }
+
+    // --- ADMIN PAGE CONTENT ROUTES ---
+    const adminPageMatch = requestPath.match(/^\/api\/admin\/pages\/([a-z0-9_-]+)$/);
+    if (adminPageMatch && request.method === "GET") {
+        handleGetAdminPage(request, response, adminPageMatch[1]);
+        return;
+    }
+    if (adminPageMatch && request.method === "PUT") {
+        await handleUpdatePage(request, response, adminPageMatch[1]);
         return;
     }
 
