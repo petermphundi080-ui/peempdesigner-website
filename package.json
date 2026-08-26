@@ -15,6 +15,7 @@
 		"bcryptjs": "^3.0.3",
 		"cookie": "^0.6.0",
 		"dotenv": "^17.4.2",
-		"nodemailer": "^9.0.5"
+		"nodemailer": "^9.0.5",
+		"resend": "^6.24.0"
 	}
 }
