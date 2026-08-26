@@ -645,7 +645,12 @@
     const messageBox = document.getElementById("form-message");
     const submitButton = document.getElementById("submitBtn");
 
-    const BACKEND_URL = "https://peempdesigner-website.onrender.com/api/contact";
+    // When this page is served by our own server (locally or on Render),
+    // call the API on the same origin. Only fall back to the deployed
+    // backend URL when the HTML file is opened directly from disk.
+    const BACKEND_URL = /^https?:$/.test(window.location.protocol)
+      ? "/api/contact"
+      : "https://peempdesigner-website.onrender.com/api/contact";
 
     form.addEventListener("submit", async function(event) {
       event.preventDefault();
@@ -699,8 +704,14 @@
           method: "POST",
         });
 
+        // Parse defensively so a non-JSON error page never crashes us.
         const responseText = await response.text();
-        const result = responseText ? JSON.parse(responseText) : {};
+        let result = {};
+        try {
+          result = responseText ? JSON.parse(responseText) : {};
+        } catch (parseError) {
+          result = {};
+        }
 
         if (!response.ok) {
           throw new Error(result.error || "Unable to send the message.");
