@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin</title>
+<style>
+  :root {
+    --bg: #14161a;
+    --panel: #1c1f25;
+    --border: #2a2e36;
+    --text: #e8e9ec;
+    --muted: #8a8f98;
+    --accent: #4f7cff;
+    --danger: #e5484d;
+    --success: #7ee787;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  /* ---------- Login screen ---------- */
+  #login-view {
+    width: 100%;
+    max-width: 360px;
+  }
+
+  .login-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px 28px;
+  }
+
+  .login-card h1 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+
+  .login-card p.sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 24px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  select,
+  textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: #101215;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    margin-bottom: 16px;
+    outline: none;
+    font-family: inherit;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+
+  button {
+    padding: 11px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  button:hover { filter: brightness(1.08); }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .full-width { width: 100%; }
+
+  .error-msg {
+    background: rgba(229, 72, 77, 0.12);
+    border: 1px solid rgba(229, 72, 77, 0.35);
+    color: #ff8b8e;
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .success-msg {
+    background: rgba(126, 231, 135, 0.12);
+    border: 1px solid rgba(126, 231, 135, 0.35);
+    color: var(--success);
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--success);
+    color: var(--text);
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    z-index: 999;
+    display: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  .toast.error { border-left-color: var(--danger); }
+
+  /* ---------- Dashboard screen ---------- */
+  #dashboard-view {
+    width: 100%;
+    max-width: 900px;
+    display: none;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .topbar h1 {
+    font-size: 18px;
+    margin: 0;
+  }
+
+  .topbar-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .back-btn, .logout-btn {
+    width: auto;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 8px 14px;
+    font-weight: 500;
+  }
+
+  .back-btn:hover { border-color: var(--accent); color: var(--accent); filter: none; }
+  .logout-btn:hover { border-color: var(--danger); color: var(--danger); filter: none; }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--success);
+    background: rgba(126, 231, 135, 0.1);
+    border: 1px solid rgba(126, 231, 135, 0.3);
+    padding: 6px 12px;
+    border-radius: 999px;
+    margin-bottom: 20px;
+  }
+
+  .status-pill::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .card {
+    background: #101215;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .card:hover { border-color: var(--accent); }
+
+  .card h3 {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0 0 6px;
+    font-weight: 500;
+  }
+
+  .card p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  /* ---------- Users view ---------- */
+  #users-view { width: 100%; max-width: 900px; display: none; }
+
+  /* ---------- Pages views ---------- */
+  #pages-view, #page-editor-view { width: 100%; max-width: 900px; display: none; }
+
+  #pages-view .card { cursor: pointer; }
+
+  .field-group { margin-bottom: 20px; }
+
+  .field-group label {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .field-group textarea,
+  .field-group input[type="text"] {
+    margin-bottom: 0;
+  }
+
+  .page-editor-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .page-editor-actions button:first-child {
+    width: auto;
+    padding: 11px 24px;
+  }
+
+  .users-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .add-user-btn { width: auto; padding: 9px 16px; font-size: 13px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    text-align: left;
+    color: var(--muted);
+    font-weight: 500;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .badge.active, .badge.published { background: rgba(126, 231, 135, 0.12); color: var(--success); }
+  .badge.suspended { background: rgba(229, 72, 77, 0.12); color: #ff8b8e; }
+  .badge.draft { background: rgba(138, 143, 152, 0.15); color: var(--muted); }
+
+  .row-actions { display: flex; gap: 6px; }
+
+  .icon-btn {
+    width: auto;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); filter: none; }
+  .icon-btn.delete:hover { border-color: var(--danger); color: var(--danger); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    width: 100%;
+    max-width: 380px;
+  }
+
+  .modal h2 {
+    font-size: 16px;
+    margin: 0 0 20px;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .modal-actions button { flex: 1; }
+
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .btn-secondary:hover { border-color: var(--text); color: var(--text); filter: none; }
+
+  .btn-danger { background: var(--danger); }
+
+  /* ---------- Loading screen ---------- */
+  #loading-view {
+    color: var(--muted);
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+  <div id="loading-view">Checking session…</div>
+
+  <!-- Login form -->
+  <div id="login-view">
+    <div class="login-card">
+      <h1>Admin sign in</h1>
+      <p class="sub">Enter your credentials to continue.</p>
+      <div class="error-msg" id="login-error"></div>
+      <form id="login-form">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" autocomplete="username" required>
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required>
+        <button type="submit" id="login-btn" class="full-width">Sign in</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard-view">
+    <div class="topbar">
+      <h1>Dashboard</h1>
+      <button class="logout-btn" id="logout-btn-dash">Log out</button>
+    </div>
+    <div class="panel">
+      <div class="status-pill">Authenticated</div>
+      <div class="grid">
+        <div class="card" id="open-content-card">
+          <h3>Content</h3>
+          <p>Manage pages and posts</p>
+        </div>
+        <div class="card" id="open-users-card-2">
+          <h3>Users</h3>
+          <p>Manage accounts</p>
+        </div>
+        <div class="card" id="open-pages-card">
+          <h3>Pages</h3>
+          <p>Edit your live website text</p>
+        </div>
+        <div class="card">
+          <h3>Orders</h3>
+          <p>View recent orders</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Users management -->
+  <div id="users-view">
+    <div class="topbar">
+      <div class="topbar-actions">
+        <button class="back-btn" id="back-to-dashboard">&larr; Back</button>
+        <h1>Users</h1>
+      </div>
+      <button class="logout-btn" id="logout-btn-users">Log out</button>
+    </div>
+    <div class="panel">
+      <div class="users-header">
+        <span style="color: var(--muted); font-size: 13px;" id="user-count">Loading…</span>
+        <button class="add-user-btn" id="open-add-modal">+ Add user</button>
+      </div>
+      <div id="users-table-wrap"></div>
+    </div>
+  </div>
+
+  <!-- Content management -->
+  <div id="content-view">
+    <div class="topbar">
+      <div class="topbar-actions">
+        <button class="back-btn" id="back-to-dashboard-from-content">&larr; Back</button>
+        <h1>Content</h1>
+      </div>
+      <button class="logout-btn" id="logout-btn-content">Log out</button>
+    </div>
+    <div class="panel">
+      <div class="users-header">
+        <span style="color: var(--muted); font-size: 13px;" id="content-count">Loading…</span>
+        <button class="add-user-btn" id="open-add-content-modal">+ Add content</button>
+      </div>
+      <div id="content-table-wrap"></div>
+    </div>
+  </div>
+
+  <!-- Add/Edit content modal -->
+  <div class="modal-overlay" id="content-modal-overlay">
+    <div class="modal">
+      <h2 id="content-modal-title">Add content</h2>
+      <div class="error-msg" id="content-modal-error"></div>
+      <form id="content-form">
+        <input type="hidden" id="content-id">
+        <label for="content-title">Title</label>
+        <input type="text" id="content-title" required>
+        <label for="content-body">Body</label>
+        <textarea id="content-body" placeholder="Page or post content…"></textarea>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="cancel-content-modal">Cancel</button>
+          <button type="submit" id="save-content-btn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete content confirm modal -->
+  <div class="modal-overlay" id="delete-content-modal-overlay">
+    <div class="modal">
+      <h2>Delete this content?</h2>
+      <p style="color: var(--muted); font-size: 13px; margin: 0 0 20px;" id="delete-content-label"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="cancel-delete-content">Cancel</button>
+        <button type="button" class="btn-danger" id="confirm-delete-content">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pages: list of editable pages -->
+  <div id="pages-view">
+    <div class="topbar">
+      <div class="topbar-actions">
+        <button class="back-btn" id="back-to-dashboard-from-pages">&larr; Back</button>
+        <h1>Pages</h1>
+      </div>
+      <button class="logout-btn" id="logout-btn-pages">Log out</button>
+    </div>
+    <div class="panel">
+      <p style="color: var(--muted); font-size: 13px; margin-bottom: 16px;">
+        These edits change the real text visitors see on your live site.
+      </p>
+      <div class="grid">
+        <div class="card" data-page="about">
+          <h3>About</h3>
+          <p>Hero, story, and strengths text</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pages: field editor for a single page -->
+  <div id="page-editor-view">
+    <div class="topbar">
+      <div class="topbar-actions">
+        <button class="back-btn" id="back-to-pages-list">&larr; Back</button>
+        <h1 id="page-editor-title">Edit page</h1>
+      </div>
+      <button class="logout-btn" id="logout-btn-page-editor">Log out</button>
+    </div>
+    <div class="panel">
+      <div class="error-msg" id="page-editor-error"></div>
+      <div class="success-msg" id="page-editor-success"></div>
+      <form id="page-editor-form"></form>
+    </div>
+  </div>
+
+  <!-- Add/Edit modal -->
+  <div class="modal-overlay" id="user-modal-overlay">
+    <div class="modal">
+      <h2 id="modal-title">Add user</h2>
+      <div class="error-msg" id="modal-error"></div>
+      <form id="user-form">
+        <input type="hidden" id="user-id">
+        <label for="user-name">Name</label>
+        <input type="text" id="user-name" required>
+        <label for="user-email">Email</label>
+        <input type="email" id="user-email" required>
+        <label for="user-status">Status</label>
+        <select id="user-status">
+          <option value="active">Active</option>
+          <option value="suspended">Suspended</option>
+        </select>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="cancel-modal">Cancel</button>
+          <button type="submit" id="save-user-btn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete confirm modal -->
+  <div class="modal-overlay" id="delete-modal-overlay">
+    <div class="modal">
+      <h2>Delete this user?</h2>
+      <p style="color: var(--muted); font-size: 13px; margin: 0 0 20px;" id="delete-user-label"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="cancel-delete">Cancel</button>
+        <button type="button" class="btn-danger" id="confirm-delete">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  // ---------- View elements ----------
+  const loadingView = document.getElementById("loading-view");
+  const loginView = document.getElementById("login-view");
+  const dashboardView = document.getElementById("dashboard-view");
+  const usersView = document.getElementById("users-view");
+  const contentView = document.getElementById("content-view");
+  const pagesView = document.getElementById("pages-view");
+  const pageEditorView = document.getElementById("page-editor-view");
+
+  const loginForm = document.getElementById("login-form");
+  const loginError = document.getElementById("login-error");
+  const loginBtn = document.getElementById("login-btn");
+
+  const toast = document.getElementById("toast");
+
+  function showToast(message, isError = false) {
+    toast.textContent = message;
+    toast.className = "toast" + (isError ? " error" : "");
+    toast.style.display = "block";
+    setTimeout(() => { toast.style.display = "none"; }, 3000);
+  }
+
+  function hideAllViews() {
+    loadingView.style.display = "none";
+    loginView.style.display = "none";
+    dashboardView.style.display = "none";
+    usersView.style.display = "none";
+    contentView.style.display = "none";
+    pagesView.style.display = "none";
+    pageEditorView.style.display = "none";
+  }
+
+  function showLogin() { hideAllViews(); loginView.style.display = "block"; }
+  function showDashboard() { hideAllViews(); dashboardView.style.display = "block"; }
+  function showUsers() { hideAllViews(); usersView.style.display = "block"; loadUsers(); }
+  function showContent() { hideAllViews(); contentView.style.display = "block"; loadContent(); }
+  function showPagesList() { hideAllViews(); pagesView.style.display = "block"; }
+
+  function showError(el, message) {
+    el.textContent = message;
+    el.style.display = "block";
+  }
+  function hideError(el) { el.style.display = "none"; }
+
+  // ---------- Session check on load ----------
+  async function checkSession() {
+    try {
+      const res = await fetch("/api/admin/dashboard", { credentials: "same-origin" });
+      if (res.ok) showDashboard(); else showLogin();
+    } catch (err) {
+      showLogin();
+    }
+  }
+
+  // ---------- Login ----------
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideError(loginError);
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Signing in…";
+
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        showDashboard();
+      } else if (res.status === 429) {
+        showError(loginError, "Too many attempts. Please wait a while before trying again.");
+      } else {
+        showError(loginError, data.error || "Invalid credentials.");
+      }
+    } catch (err) {
+      showError(loginError, "Something went wrong. Please try again.");
+    } finally {
+      loginBtn.disabled = false;
+      loginBtn.textContent = "Sign in";
+      document.getElementById("password").value = "";
+    }
+  });
+
+  // ---------- Logout (wired to both logout buttons) ----------
+  async function doLogout() {
+    try {
+      await fetch("/api/admin/logout", { method: "POST", credentials: "same-origin" });
+    } catch (err) { /* fall through to showLogin regardless */ }
+    showLogin();
+  }
+  document.getElementById("logout-btn-dash").addEventListener("click", doLogout);
+  document.getElementById("logout-btn-users").addEventListener("click", doLogout);
+  document.getElementById("logout-btn-content").addEventListener("click", doLogout);
+  document.getElementById("logout-btn-pages").addEventListener("click", doLogout);
+  document.getElementById("logout-btn-page-editor").addEventListener("click", doLogout);
+
+  // ---------- Navigation ----------
+  document.getElementById("open-users-card-2").addEventListener("click", showUsers);
+  document.getElementById("back-to-dashboard").addEventListener("click", showDashboard);
+  document.getElementById("open-content-card").addEventListener("click", showContent);
+  document.getElementById("back-to-dashboard-from-content").addEventListener("click", showDashboard);
+  document.getElementById("open-pages-card").addEventListener("click", showPagesList);
+  document.getElementById("back-to-dashboard-from-pages").addEventListener("click", showDashboard);
+  document.getElementById("back-to-pages-list").addEventListener("click", showPagesList);
+
+  // Clicking a page card in the Pages list opens its field editor
+  document.querySelectorAll("#pages-view .card[data-page]").forEach((card) => {
+    card.addEventListener("click", () => openPageEditor(card.dataset.page));
+  });
+
+  // ---------- Users: load + render ----------
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function loadUsers() {
+    const wrap = document.getElementById("users-table-wrap");
+    const countLabel = document.getElementById("user-count");
+    wrap.innerHTML = '<div class="empty-state">Loading users…</div>';
+
+    try {
+      const res = await fetch("/api/admin/users", { credentials: "same-origin" });
+      if (res.status === 401) { showLogin(); return; }
+
+      const data = await res.json();
+      const users = data.users || [];
+
+      countLabel.textContent = users.length === 1 ? "1 user" : `${users.length} users`;
+
+      if (users.length === 0) {
+        wrap.innerHTML = '<div class="empty-state">No users yet. Click "+ Add user" to create one.</div>';
+        return;
+      }
+
+      const rows = users.map(u => `
+        <tr>
+          <td>${escapeHtml(u.name)}</td>
+          <td>${escapeHtml(u.email)}</td>
+          <td><span class="badge ${u.status}">${u.status}</span></td>
+          <td>
+            <div class="row-actions">
+              <button class="icon-btn edit-btn" data-id="${u.id}">Edit</button>
+              <button class="icon-btn delete delete-btn" data-id="${u.id}" data-name="${escapeHtml(u.name)}">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+
+      wrap.innerHTML = `
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Email</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+
+      // Wire up edit/delete buttons for this render
+      wrap.querySelectorAll(".edit-btn").forEach(btn => {
+        btn.addEventListener("click", () => openEditModal(btn.dataset.id, users));
+      });
+      wrap.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", () => openDeleteModal(btn.dataset.id, btn.dataset.name));
+      });
+
+    } catch (err) {
+      wrap.innerHTML = '<div class="empty-state">Could not load users. Try refreshing.</div>';
+    }
+  }
+
+  // ---------- Add/Edit modal ----------
+  const userModalOverlay = document.getElementById("user-modal-overlay");
+  const userForm = document.getElementById("user-form");
+  const modalTitle = document.getElementById("modal-title");
+  const modalError = document.getElementById("modal-error");
+  const saveUserBtn = document.getElementById("save-user-btn");
+
+  function openAddModal() {
+    modalTitle.textContent = "Add user";
+    document.getElementById("user-id").value = "";
+    document.getElementById("user-name").value = "";
+    document.getElementById("user-email").value = "";
+    document.getElementById("user-status").value = "active";
+    hideError(modalError);
+    userModalOverlay.style.display = "flex";
+  }
+
+  function openEditModal(id, users) {
+    const user = users.find(u => u.id === id);
+    if (!user) return;
+    modalTitle.textContent = "Edit user";
+    document.getElementById("user-id").value = user.id;
+    document.getElementById("user-name").value = user.name;
+    document.getElementById("user-email").value = user.email;
+    document.getElementById("user-status").value = user.status;
+    hideError(modalError);
+    userModalOverlay.style.display = "flex";
+  }
+
+  document.getElementById("open-add-modal").addEventListener("click", openAddModal);
+  document.getElementById("cancel-modal").addEventListener("click", () => {
+    userModalOverlay.style.display = "none";
+  });
+
+  userForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideError(modalError);
+    saveUserBtn.disabled = true;
+    saveUserBtn.textContent = "Saving…";
+
+    const id = document.getElementById("user-id").value;
+    const payload = {
+      name: document.getElementById("user-name").value,
+      email: document.getElementById("user-email").value,
+      status: document.getElementById("user-status").value
+    };
+
+    try {
+      const url = id ? `/api/admin/users/${id}` : "/api/admin/users";
+      const method = id ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (res.status === 401) { showLogin(); return; }
+
+      if (res.ok && data.success) {
+        userModalOverlay.style.display = "none";
+        showToast(id ? "User updated." : "User added.");
+        loadUsers();
+      } else {
+        showError(modalError, data.error || "Could not save user.");
+      }
+    } catch (err) {
+      showError(modalError, "Something went wrong. Please try again.");
+    } finally {
+      saveUserBtn.disabled = false;
+      saveUserBtn.textContent = "Save";
+    }
+  });
+
+  // ---------- Delete modal ----------
+  const deleteModalOverlay = document.getElementById("delete-modal-overlay");
+  const deleteUserLabel = document.getElementById("delete-user-label");
+  let pendingDeleteId = null;
+
+  function openDeleteModal(id, name) {
+    pendingDeleteId = id;
+    deleteUserLabel.textContent = `"${name}" will be permanently removed.`;
+    deleteModalOverlay.style.display = "flex";
+  }
+
+  document.getElementById("cancel-delete").addEventListener("click", () => {
+    deleteModalOverlay.style.display = "none";
+    pendingDeleteId = null;
+  });
+
+  document.getElementById("confirm-delete").addEventListener("click", async () => {
+    if (!pendingDeleteId) return;
+    try {
+      const res = await fetch(`/api/admin/users/${pendingDeleteId}`, {
+        method: "DELETE",
+        credentials: "same-origin"
+      });
+      if (res.status === 401) { showLogin(); return; }
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast("User deleted.");
+        loadUsers();
+      } else {
+        showToast(data.error || "Could not delete user.", true);
+      }
+    } catch (err) {
+      showToast("Something went wrong.", true);
+    } finally {
+      deleteModalOverlay.style.display = "none";
+      pendingDeleteId = null;
+    }
+  });
+
+  // ---------- Content: load + render ----------
+  async function loadContent() {
+    const wrap = document.getElementById("content-table-wrap");
+    const countLabel = document.getElementById("content-count");
+    wrap.innerHTML = '<div class="empty-state">Loading content…</div>';
+
+    try {
+      const res = await fetch("/api/admin/content", { credentials: "same-origin" });
+      if (res.status === 401) { showLogin(); return; }
+
+      const data = await res.json();
+      const items = data.content || [];
+
+      countLabel.textContent = items.length === 1 ? "1 item" : `${items.length} items`;
+
+      if (items.length === 0) {
+        wrap.innerHTML = '<div class="empty-state">No content yet. Click "+ Add content" to create a page or post.</div>';
+        return;
+      }
+
+      const rows = items.map(c => {
+        const preview = c.body.length > 80 ? c.body.slice(0, 80) + "…" : c.body;
+        return `
+        <tr>
+          <td>${escapeHtml(c.title)}</td>
+          <td style="color: var(--muted);">${escapeHtml(preview)}</td>
+          <td>
+            <div class="row-actions">
+              <button class="icon-btn edit-content-btn" data-id="${c.id}">Edit</button>
+              <button class="icon-btn delete delete-content-btn" data-id="${c.id}" data-title="${escapeHtml(c.title)}">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `;
+      }).join("");
+
+      wrap.innerHTML = `
+        <table>
+          <thead>
+            <tr><th>Title</th><th>Body preview</th><th></th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+
+      wrap.querySelectorAll(".edit-content-btn").forEach(btn => {
+        btn.addEventListener("click", () => openEditContentModal(btn.dataset.id, items));
+      });
+      wrap.querySelectorAll(".delete-content-btn").forEach(btn => {
+        btn.addEventListener("click", () => openDeleteContentModal(btn.dataset.id, btn.dataset.title));
+      });
+
+    } catch (err) {
+      wrap.innerHTML = '<div class="empty-state">Could not load content. Try refreshing.</div>';
+    }
+  }
+
+  // ---------- Content: Add/Edit modal ----------
+  const contentModalOverlay = document.getElementById("content-modal-overlay");
+  const contentForm = document.getElementById("content-form");
+  const contentModalTitle = document.getElementById("content-modal-title");
+  const contentModalError = document.getElementById("content-modal-error");
+  const saveContentBtn = document.getElementById("save-content-btn");
+
+  function openAddContentModal() {
+    contentModalTitle.textContent = "Add content";
+    document.getElementById("content-id").value = "";
+    document.getElementById("content-title").value = "";
+    document.getElementById("content-body").value = "";
+    hideError(contentModalError);
+    contentModalOverlay.style.display = "flex";
+  }
+
+  function openEditContentModal(id, items) {
+    const item = items.find(c => c.id === id);
+    if (!item) return;
+    contentModalTitle.textContent = "Edit content";
+    document.getElementById("content-id").value = item.id;
+    document.getElementById("content-title").value = item.title;
+    document.getElementById("content-body").value = item.body || "";
+    hideError(contentModalError);
+    contentModalOverlay.style.display = "flex";
+  }
+
+  document.getElementById("open-add-content-modal").addEventListener("click", openAddContentModal);
+  document.getElementById("cancel-content-modal").addEventListener("click", () => {
+    contentModalOverlay.style.display = "none";
+  });
+
+  contentForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideError(contentModalError);
+    saveContentBtn.disabled = true;
+    saveContentBtn.textContent = "Saving…";
+
+    const id = document.getElementById("content-id").value;
+    const payload = {
+      title: document.getElementById("content-title").value,
+      body: document.getElementById("content-body").value
+    };
+
+    try {
+      const url = id ? `/api/admin/content/${id}` : "/api/admin/content";
+      const method = id ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (res.status === 401) { showLogin(); return; }
+
+      if (res.ok && data.success) {
+        contentModalOverlay.style.display = "none";
+        showToast(id ? "Content updated." : "Content added.");
+        loadContent();
+      } else {
+        showError(contentModalError, data.error || "Could not save content.");
+      }
+    } catch (err) {
+      showError(contentModalError, "Something went wrong. Please try again.");
+    } finally {
+      saveContentBtn.disabled = false;
+      saveContentBtn.textContent = "Save";
+    }
+  });
+
+  // ---------- Content: Delete modal ----------
+  const deleteContentModalOverlay = document.getElementById("delete-content-modal-overlay");
+  const deleteContentLabel = document.getElementById("delete-content-label");
+  let pendingDeleteContentId = null;
+
+  function openDeleteContentModal(id, title) {
+    pendingDeleteContentId = id;
+    deleteContentLabel.textContent = `"${title}" will be permanently removed.`;
+    deleteContentModalOverlay.style.display = "flex";
+  }
+
+  document.getElementById("cancel-delete-content").addEventListener("click", () => {
+    deleteContentModalOverlay.style.display = "none";
+    pendingDeleteContentId = null;
+  });
+
+  document.getElementById("confirm-delete-content").addEventListener("click", async () => {
+    if (!pendingDeleteContentId) return;
+    try {
+      const res = await fetch(`/api/admin/content/${pendingDeleteContentId}`, {
+        method: "DELETE",
+        credentials: "same-origin"
+      });
+      if (res.status === 401) { showLogin(); return; }
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast("Content deleted.");
+        loadContent();
+      } else {
+        showToast(data.error || "Could not delete content.", true);
+      }
+    } catch (err) {
+      showToast("Something went wrong.", true);
+    } finally {
+      deleteContentModalOverlay.style.display = "none";
+      pendingDeleteContentId = null;
+    }
+  });
+
+  // ---------- Pages: field editor ----------
+  const pageEditorTitle = document.getElementById("page-editor-title");
+  const pageEditorForm = document.getElementById("page-editor-form");
+  const pageEditorError = document.getElementById("page-editor-error");
+  const pageEditorSuccess = document.getElementById("page-editor-success");
+
+  const PAGE_LABELS = { about: "About page" };
+  let currentPageName = null;
+
+  function fieldKeyToLabel(key) {
+    // "hero_heading" -> "Hero heading"
+    const words = key.replace(/_/g, " ");
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  }
+
+  async function openPageEditor(pageName) {
+    currentPageName = pageName;
+    hideAllViews();
+    pageEditorView.style.display = "block";
+    pageEditorTitle.textContent = PAGE_LABELS[pageName] || pageName;
+    pageEditorForm.innerHTML = '<p style="color: var(--muted); font-size: 13px;">Loading…</p>';
+    hideError(pageEditorError);
+    pageEditorSuccess.style.display = "none";
+
+    try {
+      const res = await fetch(`/api/admin/pages/${pageName}`, { credentials: "same-origin" });
+      if (res.status === 401) { showLogin(); return; }
+      if (!res.ok) {
+        pageEditorForm.innerHTML = '<p style="color: var(--muted); font-size: 13px;">Could not load this page.</p>';
+        return;
+      }
+
+      const data = await res.json();
+      const fields = data.fields || [];
+      const content = data.content || {};
+
+      if (fields.length === 0) {
+        pageEditorForm.innerHTML = '<p style="color: var(--muted); font-size: 13px;">No editable fields found for this page.</p>';
+        return;
+      }
+
+      pageEditorForm.innerHTML = fields.map((key) => {
+        const value = content[key] || "";
+        const isLong = value.length > 80 || key.includes("paragraph");
+        const inputHtml = isLong
+          ? `<textarea data-field-key="${key}">${escapeHtml(value)}</textarea>`
+          : `<input type="text" data-field-key="${key}" value="${escapeHtml(value)}">`;
+        return `
+          <div class="field-group">
+            <label>${escapeHtml(fieldKeyToLabel(key))}</label>
+            ${inputHtml}
+          </div>
+        `;
+      }).join("") + `
+        <div class="page-editor-actions">
+          <button type="submit">Save changes</button>
+        </div>
+      `;
+    } catch (err) {
+      pageEditorForm.innerHTML = '<p style="color: var(--muted); font-size: 13px;">Could not load this page. Try again.</p>';
+    }
+  }
+
+  pageEditorForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideError(pageEditorError);
+    pageEditorSuccess.style.display = "none";
+
+    const submitBtn = pageEditorForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Saving…";
+
+    const payload = {};
+    pageEditorForm.querySelectorAll("[data-field-key]").forEach((el) => {
+      payload[el.dataset.fieldKey] = el.value;
+    });
+
+    try {
+      const res = await fetch(`/api/admin/pages/${currentPageName}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (res.status === 401) { showLogin(); return; }
+
+      if (res.ok && data.success) {
+        pageEditorSuccess.textContent = "Saved. Your live page has been updated.";
+        pageEditorSuccess.style.display = "block";
+        showToast("Page updated.");
+      } else {
+        showError(pageEditorError, data.error || "Could not save changes.");
+      }
+    } catch (err) {
+      showError(pageEditorError, "Something went wrong. Please try again.");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Save changes";
+    }
+  });
+
+  checkSession();
+</script>
+
+</body>
+</html>
