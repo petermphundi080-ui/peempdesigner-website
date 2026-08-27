@@ -9,7 +9,7 @@ const usersStore = require("./lib/usersstore");
 const contentStore = require("./lib/contentstore");
 const pageContentStore = require("./lib/pagecontentstore");
 const mediaStore = require("./lib/mediastore");
-const portfolioStore = require("./lib/portfolioStore");
+const portfolioStore = require("./lib/portfoliostore");
 
 require("dotenv").config();
 
