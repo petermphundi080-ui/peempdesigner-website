@@ -119,7 +119,6 @@
 
     .nav-links {
       display: flex;
-      gap: 30px;
       list-style: none;
     }
 
@@ -127,6 +126,7 @@
       text-decoration: none;
       color: var(--ink-muted);
       font-size: 14px;
+      margin: 0 15px;
       position: relative;
       transition: 0.3s;
     }
@@ -483,9 +483,9 @@
   =============================== -->
 
   <section class="contact-hero animate-on-scroll">
-    <div class="tag">CONTACT</div>
-    <h1>Let's Work Together.</h1>
-    <p>
+    <div class="tag" data-key="hero_tag">CONTACT</div>
+    <h1 data-key="hero_heading">Let's Work Together.</h1>
+    <p data-key="hero_paragraph">
       Have a project in mind? Let's create something professional,
       creative, and memorable.
     </p>
@@ -500,7 +500,7 @@
     <!-- CONTACT INFORMATION -->
 
     <section class="contact-info animate-on-scroll">
-      <h2>Get In Touch.</h2>
+      <h2 data-key="info_heading">Get In Touch.</h2>
 
       <div class="contact-item email-item">
         <div class="contact-icon" aria-hidden="true">
@@ -510,13 +510,7 @@
         </div>
         <div class="contact-item-content">
           <span>Email</span>
-          <a
-            href="https://mail.google.com/mail/?view=cm&fs=1&to=hellopeempdesigner@gmail.com"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            hellopeempdesigner@gmail.com
-          </a>
+          <a href="mailto:hellopeempdesigner@gmail.com">hellopeempdesigner@gmail.com</a>
         </div>
       </div>
 
@@ -556,7 +550,7 @@
     <!-- CONTACT FORM -->
 
     <section class="contact-form animate-on-scroll">
-      <h2>Send a Message.</h2>
+      <h2 data-key="form_heading">Send a Message.</h2>
 
       <form id="contactForm" novalidate>
 
@@ -621,7 +615,7 @@
           ></textarea>
         </div>
 
-        <button type="submit" class="submit-btn" id="submitBtn">
+        <button type="submit" class="submit-btn" id="submitBtn" data-key="submit_button_text">
           Send Message →
         </button>
 
@@ -637,8 +631,8 @@
   =============================== -->
 
   <footer>
-    <div>© 2026 Peempdesigner. All Rights Reserved.</div>
-    <div>Creating designs that make an impact.</div>
+    <div data-key="footer_text1">© 2026 Peempdesigner. All Rights Reserved.</div>
+    <div data-key="footer_text2">Creating designs that make an impact.</div>
   </footer>
 
   <!-- ===============================
@@ -650,13 +644,6 @@
     const form = document.getElementById("contactForm");
     const messageBox = document.getElementById("form-message");
     const submitButton = document.getElementById("submitBtn");
-
-    // When this page is served by our own server (locally or on Render),
-    // call the API on the same origin. Only fall back to the deployed
-    // backend URL when the HTML file is opened directly from disk.
-    const BACKEND_URL = /^https?:$/.test(window.location.protocol)
-      ? "/api/contact"
-      : "https://peempdesigner-website.onrender.com/api/contact";
 
     form.addEventListener("submit", async function(event) {
       event.preventDefault();
@@ -704,27 +691,19 @@
       submitButton.textContent = "Sending...";
 
       try {
-        const response = await fetch(BACKEND_URL, {
+        const response = await fetch("/api/contact", {
           body: JSON.stringify({ name, email, project, message, website: honeypot }),
           headers: { "Content-Type": "application/json" },
           method: "POST",
         });
-
-        // Parse defensively so a non-JSON error page never crashes us.
-        const responseText = await response.text();
-        let result = {};
-        try {
-          result = responseText ? JSON.parse(responseText) : {};
-        } catch (parseError) {
-          result = {};
-        }
+        const result = await response.json();
 
         if (!response.ok) {
           throw new Error(result.error || "Unable to send the message.");
         }
 
         form.reset();
-        messageBox.textContent = result.message || "Message sent successfully!";
+        messageBox.textContent = result.message;
       } catch (error) {
         messageBox.textContent = error.message;
       } finally {
@@ -769,6 +748,28 @@
     }, { threshold: 0.15 });
 
     document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+
+    // --- LOAD EDITABLE TEXT FROM ADMIN CONTENT ---
+    // Every element with a data-key attribute gets its text filled in from
+    // the server. If the fetch fails for any reason, the original hardcoded
+    // text above stays visible, so the page never breaks for visitors.
+    (async function loadPageContent() {
+      try {
+        const res = await fetch('/api/pages/contact');
+        if (!res.ok) return;
+        const data = await res.json();
+        const content = data.content || {};
+
+        document.querySelectorAll('[data-key]').forEach((el) => {
+          const key = el.getAttribute('data-key');
+          if (Object.prototype.hasOwnProperty.call(content, key) && content[key]) {
+            el.textContent = content[key];
+          }
+        });
+      } catch (err) {
+        // Silently keep the hardcoded fallback text if this fails
+      }
+    })();
 
   </script>
 
