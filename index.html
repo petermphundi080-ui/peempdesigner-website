@@ -73,6 +73,7 @@
     nav {
       align-items: center;
       background: var(--nav-bg);
+      -webkit-backdrop-filter: blur(8px);
       backdrop-filter: blur(8px);
       border-bottom: 1px solid var(--border-color);
       display: flex;
@@ -95,7 +96,6 @@
     .nav-links {
       align-items: center;
       display: flex;
-      gap: clamp(20px, 4vw, 50px);
       margin-left: auto;
       margin-right: 20px;
     }
@@ -106,6 +106,7 @@
       font-weight: 600;
       text-decoration: none;
       transition: color 0.3s ease;
+      margin: 0 20px;
     }
 
     .nav-links a:hover,
@@ -206,8 +207,11 @@
     }
 
     h1 span {
-      color: var(--orange);
       display: block;
+    }
+
+    h1 .accent {
+      color: var(--orange);
     }
 
     .intro {
@@ -388,7 +392,6 @@
         flex-basis: 100%;
         justify-content: center;
         margin: 5px 0 0;
-        gap: 18px;
       }
 
       .nav-actions {
@@ -397,6 +400,16 @@
     }
 
     @media (max-width: 760px) {
+      /* Make the sticky nav fully solid on mobile -- the translucent
+         blur effect looks fine on desktop, but on a small screen the
+         hero heading "ghosts" through it once you scroll, making the
+         logo and heading look like they're overlapping. */
+      nav {
+        background: var(--bg-main) !important;
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+      }
+
       .logo {
         height: 52px;
         width: 52px;
@@ -404,6 +417,7 @@
 
       .nav-links a {
         font-size: 13px;
+        margin: 0 10px;
       }
 
       .hire-button {
@@ -412,35 +426,49 @@
       }
 
       .hero {
-        min-height: 600px;
+        min-height: 420px;
+        overflow: hidden;
+        position: relative;
       }
 
       .hero-image {
-        height: 57%;
-        left: 30%;
-        opacity: 0.8;
-        top: 43%;
-        width: 70%;
+        position: absolute;
+        right: 0;
+        top: 0;
+        left: auto;
+        bottom: auto;
+        width: 42%;
+        height: 100%;
+        opacity: 1;
+        object-position: center top;
       }
 
       .hero-content {
-        background: var(--hero-overlay);
-        min-height: 600px;
-        padding: 60px 24px 40px;
-        width: 100%;
+        align-items: flex-start;
+        background: none;
+        justify-content: center;
+        min-height: 420px;
+        padding: 20px 4px 20px 20px;
+        position: relative;
+        width: 56%;
+        z-index: 5;
       }
 
       h1 {
-        font-size: clamp(48px, 15vw, 82px);
-        letter-spacing: -2px;
+        font-size: clamp(24px, 8vw, 38px);
+        letter-spacing: -1px;
       }
 
       .intro {
-        margin: 35px 0 24px;
+        margin: 16px 0 16px;
+        max-width: 320px;
+        font-size: 14px;
       }
 
       .portfolio-button {
         margin-left: 0;
+        font-size: 13px;
+        padding: 12px 18px;
       }
 
       .services {
@@ -448,15 +476,18 @@
       }
 
       .service-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
+        display: block;
       }
 
       .service-card {
         min-height: 128px;
         padding: 30px;
         border-radius: 30px;
+        margin-bottom: 20px;
+      }
+
+      .service-card:last-child {
+        margin-bottom: 0;
       }
 
       .service-card h2 {
@@ -483,6 +514,7 @@
         class="logo"
         src="https://www.figma.com/api/mcp/asset/efde8ea9-8862-495e-9c05-4ef4f3358d3a.png"
         alt="PEEMP Designer logo"
+        data-image-key="logo_image"
       />
     </a>
 
@@ -497,7 +529,7 @@
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle Theme">
         <span id="themeIcon">🌙</span> <span id="themeText">Dark</span>
       </button>
-      <button class="hire-button" onclick="location.href='contact.html'">
+      <button class="hire-button" onclick="location.href='contact.html'" data-key="hire_button_text">
         Hire Me
       </button>
     </div>
@@ -511,21 +543,21 @@
         class="hero-image reveal-image"
         src="https://www.figma.com/api/mcp/asset/a11c8f86-5df9-4e70-8f6c-7645b6fecbf9.png"
         alt="Graphic designer character"
+        data-image-key="hero_image"
       />
 
       <div class="hero-content reveal">
         <h1>
-          CREATIVE
-          <br />
-          GRAPHIC
-          <span>DESIGNER</span>
+          <span data-key="hero_line1">CREATIVE</span>
+          <span data-key="hero_line2">GRAPHIC</span>
+          <span class="accent" data-key="hero_span">DESIGNER</span>
         </h1>
 
-        <p class="intro">
+        <p class="intro" data-key="hero_intro">
           Hello! I'm Peter Mphundi, a graphic designer.
         </p>
 
-        <button class="portfolio-button" onclick="location.href='portfolio.html'">
+        <button class="portfolio-button" onclick="location.href='portfolio.html'" data-key="portfolio_button_text">
           View portfolio
         </button>
       </div>
@@ -533,7 +565,7 @@
 
     <!-- SERVICES SECTION -->
     <section class="services reveal" id="services">
-      <h2 class="section-title">What I do</h2>
+      <h2 class="section-title" data-key="services_title">What I do</h2>
 
       <img
         class="section-line"
@@ -543,30 +575,30 @@
 
       <div class="service-grid reveal-stagger">
         <article class="service-card logo-card">
-          <h2>Logo designer</h2>
-          <p>Modern, unique and memorable brand identities</p>
+          <h2 data-key="service1_title">Logo designer</h2>
+          <p data-key="service1_desc">Modern, unique and memorable brand identities</p>
         </article>
 
         <article class="service-card brand-card">
-          <h2>Brand identity</h2>
-          <p>Complete branding packages for business</p>
+          <h2 data-key="service2_title">Brand identity</h2>
+          <p data-key="service2_desc">Complete branding packages for business</p>
         </article>
 
         <article class="service-card social-card">
-          <h2>Social Media Design</h2>
-          <p>Creative content for Facebook, Instagram and more</p>
+          <h2 data-key="service3_title">Social Media Design</h2>
+          <p data-key="service3_desc">Creative content for Facebook, Instagram and more</p>
         </article>
 
         <article class="service-card print-card">
-          <h2>Print Design</h2>
-          <p>Flyers, posters, business cards and brochures</p>
+          <h2 data-key="service4_title">Print Design</h2>
+          <p data-key="service4_desc">Flyers, posters, business cards and brochures</p>
         </article>
       </div>
     </section>
   </main>
 
   <!-- FOOTER -->
-  <footer id="contact">
+  <footer id="contact" data-key="footer_text">
     © 2026 PEEMPDESIGNER | Graphic Designer
   </footer>
 
@@ -610,6 +642,37 @@
 
       revealElements.forEach(element => revealObserver.observe(element));
     }
+
+    // --- LOAD EDITABLE TEXT FROM ADMIN CONTENT ---
+    // Every element with a data-key attribute gets its text filled in from
+    // the server. If the fetch fails for any reason, the original hardcoded
+    // text above stays visible, so the page never breaks for visitors.
+    (async function loadPageContent() {
+      try {
+        const res = await fetch('/api/pages/home');
+        if (!res.ok) return;
+        const data = await res.json();
+        const content = data.content || {};
+
+        document.querySelectorAll('[data-key]').forEach((el) => {
+          const key = el.getAttribute('data-key');
+          if (Object.prototype.hasOwnProperty.call(content, key) && content[key]) {
+            el.textContent = content[key];
+          }
+        });
+
+        // Same idea, but for images: swap the src of any element with a
+        // data-image-key attribute if the admin has set a custom image.
+        document.querySelectorAll('[data-image-key]').forEach((el) => {
+          const key = el.getAttribute('data-image-key');
+          if (Object.prototype.hasOwnProperty.call(content, key) && content[key]) {
+            el.src = content[key];
+          }
+        });
+      } catch (err) {
+        // Silently keep the hardcoded fallback text if this fails
+      }
+    })();
   </script>
 </body>
 </html>
