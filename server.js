@@ -5,10 +5,10 @@ const nodemailer = require("nodemailer");
 const cookie = require("cookie");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
-const usersStore = require("./lib/usersStore");
-const contentStore = require("./lib/contentStore");
-const pageContentStore = require("./lib/pageContentStore");
-const mediaStore = require("./lib/mediaStore");
+const usersStore = require("./lib/usersstore");
+const contentStore = require("./lib/contentstore");
+const pageContentStore = require("./lib/pagecontentstore");
+const mediaStore = require("./lib/mediastore");
 const portfolioStore = require("./lib/portfolioStore");
 
 require("dotenv").config();
