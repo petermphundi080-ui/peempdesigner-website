@@ -1,0 +1,60 @@
+{
+  "about": {
+    "hero_heading": "About Me",
+    "hero_paragraph": "I’m a graphic designer passionate about visual storytelling, typography, and thoughtful branding that helps people connect with ideas.",
+    "story_heading": "My Story",
+    "story_paragraph": "I’ve always been drawn to the way a single layout, a well-chosen typeface, or a simple mark can turn a message into a memory. As a graphic designer, I partner with clients to craft visual systems that feel intentional, clear, and human.",
+    "strengths_heading": "My Strengths",
+    "strength1_heading": "Branding & Identity",
+    "strength1_paragraph": "I help brands find their voice through logos, color systems, typography, and guidelines that scale from business cards to websites.",
+    "strength2_heading": "Print & Digital",
+    "strength2_paragraph": "From posters and brochures to social assets and websites, I design across mediums with a focus on consistency and impact.",
+    "strength3_heading": "Typography",
+    "strength3_paragraph": "I believe type is the foundation of good design. I love pairing fonts, setting hierarchies, and refining layouts that read beautifully.",
+    "cta_text": "Let’s Work Together",
+    "footer_text": "© 2026 Peempdesigner. All Rights Reserved."
+  },
+  "contact": {
+    "hero_tag": "CONTACT",
+    "hero_heading": "Let's Work Together.",
+    "hero_paragraph": "Have a project in mind? Let's create something professional, creative, and memorable.",
+    "info_heading": "Get In Touch.",
+    "form_heading": "Send a Message.",
+    "submit_button_text": "Send Message →",
+    "footer_text1": "© 2026 Peempdesigner. All Rights Reserved.",
+    "footer_text2": "Creating designs that make an impact."
+  },
+  "home": {
+    "hero_line1": "CREATIVE",
+    "hero_line2": "GRAPHIC",
+    "hero_span": "DESIGNER",
+    "hero_intro": "Hello! I'm Peter Mphundi, a graphic designer.",
+    "portfolio_button_text": "View portfolio",
+    "hire_button_text": "Hire Me",
+    "services_title": "What I do",
+    "service1_title": "Logo designer",
+    "service1_desc": "Modern, unique and memorable brand identities",
+    "service2_title": "Brand identity",
+    "service2_desc": "Complete branding packages for business",
+    "service3_title": "Social Media Design",
+    "service3_desc": "Creative content for Facebook, Instagram and more",
+    "service4_title": "Print Design",
+    "service4_desc": "Flyers, posters, business cards and brochures",
+    "footer_text": "© 2026 PEEMPDESIGNER | Graphic Designer"
+  },
+  "portfolio": {
+    "featured_image": "",
+    "hero_tag": "",
+    "hero_heading": "",
+    "hero_paragraph": "",
+    "featured_tag": "",
+    "featured_heading": "",
+    "featured_paragraph": "",
+    "featured_button_text": "",
+    "cta_heading": "",
+    "cta_paragraph": "",
+    "cta_button_text": "",
+    "footer_text1": "",
+    "footer_text2": ""
+  }
+}
