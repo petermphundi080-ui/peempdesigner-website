@@ -87,7 +87,6 @@
 
     .nav-links {
       display: flex;
-      gap: 30px;
       list-style: none;
     }
 
@@ -95,6 +94,7 @@
       text-decoration: none;
       color: var(--muted);
       font-size: 14px;
+      margin: 0 15px;
       transition: 0.3s;
       position: relative;
     }
@@ -335,6 +335,13 @@
       transform: translateY(-4px);
     }
 
+    .portfolio-empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 60px 20px;
+      grid-column: 1 / -1;
+    }
+
     /* ================= FEATURED PROJECT ================= */
 
     .featured {
@@ -551,8 +558,8 @@
         grid-template-columns: repeat(2, 1fr);
       }
 
-      .nav-links {
-        gap: 15px;
+      .nav-links a {
+        margin: 0 8px;
       }
 
       .featured-image {
@@ -648,9 +655,9 @@
 
   <!-- HERO -->
   <section class="hero">
-    <div class="hero-tag scroll-reveal">PORTFOLIO</div>
-    <h1 class="scroll-reveal">Selected Work.</h1>
-    <p class="scroll-reveal">
+    <div class="hero-tag scroll-reveal" data-key="hero_tag">PORTFOLIO</div>
+    <h1 class="scroll-reveal" data-key="hero_heading">Selected Work.</h1>
+    <p class="scroll-reveal" data-key="hero_paragraph">
       Explore a collection of creative projects, from brand identities
       and logos to posters, social media designs, and digital experiences.
     </p>
@@ -669,104 +676,8 @@
   <!-- PROJECTS -->
   <main class="portfolio">
 
-    <div class="project-grid">
-
-      <!-- PROJECT 1 -->
-      <div class="project-card scroll-reveal" data-category="branding">
-        <div class="project-image scroll-reveal-image" data-lightbox="images/64659a13-022c-44e1-a26b-6ec3b8d76d8f.png">
-          <img src="images/64659a13-022c-44e1-a26b-6ec3b8d76d8f.png" alt="Mavunex brand identity">
-
-          <div class="project-overlay">
-            <a class="project-link" href="project.html?image=images/64659a13-022c-44e1-a26b-6ec3b8d76d8f.png&amp;title=Mavunex">View Project →</a>
-          </div>
-        </div>
-
-        <div class="project-info">
-          <h3>Mavunex</h3>
-          <p>Brand Identity</p>
-        </div>
-      </div>
-
-      <!-- PROJECT 2 -->
-      <div class="project-card scroll-reveal" data-category="branding">
-        <div class="project-image scroll-reveal-image" data-lightbox="images/Shawarma.png">
-          <img src="images/Shawarma.png" alt="Shawarma campaign design">
-
-          <div class="project-overlay">
-            <a class="project-link" href="project.html?image=images/Shawarma.png&amp;title=Shawarma%20Campaign">View Project →</a>
-          </div>
-        </div>
-
-        <div class="project-info">
-          <h3>Shawarma Campaign</h3>
-          <p>Poster Design</p>
-        </div>
-      </div>
-
-      <!-- PROJECT 3 -->
-      <div class="project-card scroll-reveal" data-category="logos">
-        <div class="project-image scroll-reveal-image" data-lightbox="images/b1837849-135a-42ae-b80f-9dc40f868238.png">
-          <img src="images/b1837849-135a-42ae-b80f-9dc40f868238.png" alt="Elie’s Cosmetics logo mark">
-
-          <div class="project-overlay">
-            <a class="project-link" href="project.html?image=images/b1837849-135a-42ae-b80f-9dc40f868238.png&amp;title=Elie%27s%20Logo%20Mark">View Project →</a>
-          </div>
-        </div>
-
-        <div class="project-info">
-          <h3>Elie’s Logo Mark</h3>
-          <p>Logo Design</p>
-        </div>
-      </div>
-
-      <!-- PROJECT 4 -->
-      <div class="project-card scroll-reveal" data-category="posters">
-        <div class="project-image scroll-reveal-image" data-lightbox="images/sports shoes.png">
-          <img src="images/sports shoes.png" alt="Sports shoe campaign design">
-
-          <div class="project-overlay">
-            <a class="project-link" href="project.html?image=images/sports%20shoes.png&amp;title=Sports%20Shoes%20Campaign">View Project →</a>
-          </div>
-        </div>
-
-        <div class="project-info">
-          <h3>Sports Shoes Campaign</h3>
-          <p>Poster Design</p>
-        </div>
-      </div>
-
-      <!-- PROJECT 5 -->
-      <div class="project-card scroll-reveal" data-category="branding">
-        <div class="project-image scroll-reveal-image" data-lightbox="images/Elie`s.png">
-          <img src="images/Elie`s.png" alt="Elie’s Cosmetics visual identity">
-
-          <div class="project-overlay">
-            <a class="project-link" href="project.html?image=images/Elie%60s.png&amp;title=Elie%27s%20Visual%20Identity">View Project →</a>
-          </div>
-        </div>
-
-        <div class="project-info">
-          <h3>Elie’s Visual Identity</h3>
-          <p>Brand Identity</p>
-        </div>
-      </div>
-
-      <!-- PROJECT 6 -->
-      <div class="project-card scroll-reveal" data-category="social">
-        <div class="project-image scroll-reveal-image" data-lightbox="images/sports shoes.png">
-          <img src="images/sports shoes.png" alt="Sports shoes social media design">
-
-          <div class="project-overlay">
-            <a class="project-link" href="project.html?image=images/sports%20shoes.png&amp;title=Sports%20Shoes%20Social%20Campaign">View Project →</a>
-          </div>
-        </div>
-
-        <div class="project-info">
-          <h3>Sports Shoes Social Campaign</h3>
-          <p>Social Media Design</p>
-        </div>
-      </div>
-
+    <div class="project-grid" id="projectGrid">
+      <div class="portfolio-empty">Loading projects…</div>
     </div>
 
     <a class="more-projects" href="all-work.html">View More Projects →</a>
@@ -776,36 +687,36 @@
   <!-- FEATURED PROJECT -->
   <section class="featured scroll-reveal" id="featured-project">
     <div class="featured-container">
-      <div class="featured-tag">FEATURED PROJECT</div>
-      <h2>Mavunex Brand Identity.</h2>
-      <p>
+      <div class="featured-tag" data-key="featured_tag">FEATURED PROJECT</div>
+      <h2 data-key="featured_heading">Mavunex Brand Identity.</h2>
+      <p data-key="featured_paragraph">
         A modern and memorable visual identity created for an innovative
         agri-tech brand focused on connecting agriculture, technology,
         and new opportunities.
       </p>
 
-      <a href="project.html?image=images/64659a13-022c-44e1-a26b-6ec3b8d76d8f.png&amp;title=Mavunex%20Brand%20Identity" class="featured-btn">View Case Study →</a>
+      <a href="project.html?image=images/64659a13-022c-44e1-a26b-6ec3b8d76d8f.png&amp;title=Mavunex%20Brand%20Identity" class="featured-btn" data-key="featured_button_text">View Case Study →</a>
 
-      <div class="featured-image scroll-reveal-image" data-lightbox="images/64659a13-022c-44e1-a26b-6ec3b8d76d8f.png">
-        <img src="images/64659a13-022c-44e1-a26b-6ec3b8d76d8f.png" alt="Mavunex featured project">
+      <div class="featured-image scroll-reveal-image" data-lightbox="images/64659a13-022c-44e1-a26b-6ec3b8d76d8f.png" id="featuredImageBox">
+        <img src="images/64659a13-022c-44e1-a26b-6ec3b8d76d8f.png" alt="Mavunex featured project" data-image-key="featured_image" id="featuredImage">
       </div>
     </div>
   </section>
 
   <!-- CTA -->
   <section class="cta scroll-reveal" id="contact">
-    <h2>Like What You See?</h2>
-    <p>
+    <h2 data-key="cta_heading">Like What You See?</h2>
+    <p data-key="cta_paragraph">
       Have a project in mind? Let's create something professional
       and memorable.
     </p>
-    <a href="contact.html" class="cta-btn">Start a Project →</a>
+    <a href="contact.html" class="cta-btn" data-key="cta_button_text">Start a Project →</a>
   </section>
 
   <!-- FOOTER -->
   <footer>
-    <div>© 2026 Peempdesigner. All Rights Reserved.</div>
-    <div>Creating designs that make an impact.</div>
+    <div data-key="footer_text1">© 2026 Peempdesigner. All Rights Reserved.</div>
+    <div data-key="footer_text2">Creating designs that make an impact.</div>
   </footer>
 
   <!-- IMAGE LIGHTBOX -->
@@ -840,50 +751,32 @@
       themeText.textContent = t === 'dark' ? 'Light' : 'Dark';
     }
 
-    // Category Filter Logic
-    const filterButtons = document.querySelectorAll(".filter-btn");
-    const projects = document.querySelectorAll(".project-card");
-    const revealElements = document.querySelectorAll(".scroll-reveal, .scroll-reveal-image");
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      revealElements.forEach(element => element.classList.add("is-visible"));
-    } else {
-      const revealObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          entry.target.classList.toggle("is-visible", entry.isIntersecting);
-        });
-      }, { threshold: 0.1 });
+    // Shared scroll-reveal observer -- used for both the static sections
+    // (already in the page) and the project cards (added dynamically below).
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        entry.target.classList.toggle("is-visible", entry.isIntersecting);
+      });
+    }, { threshold: 0.1 });
 
-      revealElements.forEach(element => revealObserver.observe(element));
+    function observeReveal(el) {
+      if (prefersReducedMotion) {
+        el.classList.add("is-visible");
+      } else {
+        revealObserver.observe(el);
+      }
     }
 
-    filterButtons.forEach(button => {
-      button.addEventListener("click", () => {
-        filterButtons.forEach(btn => btn.classList.remove("active"));
-        button.classList.add("active");
-
-        const filter = button.getAttribute("data-filter");
-
-        projects.forEach(project => {
-          const category = project.getAttribute("data-category");
-
-          if (filter === "all" || category === filter) {
-            project.classList.remove("hide");
-            project.classList.add("is-visible");
-            project.querySelectorAll(".scroll-reveal-image").forEach(img => img.classList.add("is-visible"));
-          } else {
-            project.classList.add("hide");
-          }
-        });
-      });
-    });
+    document.querySelectorAll(".scroll-reveal, .scroll-reveal-image").forEach(observeReveal);
 
     // Lightbox Logic
     const imageLightbox = document.getElementById("imageLightbox");
     const lightboxImage = document.getElementById("lightboxImage");
     const lightboxClose = document.getElementById("lightboxClose");
 
-    document.querySelectorAll("[data-lightbox]").forEach((item) => {
+    function wireLightbox(item) {
       item.addEventListener("click", (event) => {
         if (event.target.closest(".project-link")) return;
 
@@ -897,11 +790,12 @@
         imageLightbox.classList.add("active");
         document.body.style.overflow = "hidden";
       });
-    });
+    }
+
+    document.querySelectorAll("[data-lightbox]").forEach(wireLightbox);
 
     function closeImageLightbox() {
       if (!imageLightbox) return;
-
       imageLightbox.classList.remove("active");
       lightboxImage.src = "";
       document.body.style.overflow = "";
@@ -910,9 +804,7 @@
     lightboxClose?.addEventListener("click", closeImageLightbox);
 
     imageLightbox?.addEventListener("click", (event) => {
-      if (event.target === imageLightbox) {
-        closeImageLightbox();
-      }
+      if (event.target === imageLightbox) closeImageLightbox();
     });
 
     document.addEventListener("keydown", (event) => {
@@ -920,6 +812,123 @@
         closeImageLightbox();
       }
     });
+
+    // Category label shown under each project title, based on its category
+    const CATEGORY_LABELS = {
+      branding: "Brand Identity",
+      logos: "Logo Design",
+      posters: "Poster Design",
+      social: "Social Media Design",
+      web: "Web Design"
+    };
+
+    function escapeHtml(str) {
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // --- LOAD AND RENDER PROJECTS DYNAMICALLY ---
+    async function loadProjects() {
+      const grid = document.getElementById("projectGrid");
+
+      try {
+        const res = await fetch('/api/portfolio-projects');
+        if (!res.ok) throw new Error("Failed to load");
+        const data = await res.json();
+        const projects = data.projects || [];
+
+        if (projects.length === 0) {
+          grid.innerHTML = '<div class="portfolio-empty">No projects yet.</div>';
+          return;
+        }
+
+        grid.innerHTML = projects.map((p) => {
+          const categoryLabel = CATEGORY_LABELS[p.category] || p.category;
+          const linkUrl = `project.html?image=${encodeURIComponent(p.image)}&title=${encodeURIComponent(p.link_title || p.title)}`;
+          return `
+            <div class="project-card scroll-reveal" data-category="${escapeHtml(p.category)}">
+              <div class="project-image scroll-reveal-image" data-lightbox="${escapeHtml(p.image)}">
+                <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.title)}">
+                <div class="project-overlay">
+                  <a class="project-link" href="${linkUrl}">View Project →</a>
+                </div>
+              </div>
+              <div class="project-info">
+                <h3>${escapeHtml(p.title)}</h3>
+                <p>${escapeHtml(categoryLabel)}</p>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        // Re-wire behavior for the newly created cards
+        grid.querySelectorAll(".scroll-reveal, .scroll-reveal-image").forEach(observeReveal);
+        grid.querySelectorAll("[data-lightbox]").forEach(wireLightbox);
+        setupFilters();
+      } catch (err) {
+        grid.innerHTML = '<div class="portfolio-empty">Could not load projects. Please refresh.</div>';
+      }
+    }
+
+    // Category Filter Logic -- re-run after each render since cards are new
+    function setupFilters() {
+      const filterButtons = document.querySelectorAll(".filter-btn");
+      const projects = document.querySelectorAll(".project-card");
+
+      filterButtons.forEach(button => {
+        button.onclick = () => {
+          filterButtons.forEach(btn => btn.classList.remove("active"));
+          button.classList.add("active");
+
+          const filter = button.getAttribute("data-filter");
+
+          projects.forEach(project => {
+            const category = project.getAttribute("data-category");
+
+            if (filter === "all" || category === filter) {
+              project.classList.remove("hide");
+              project.classList.add("is-visible");
+              project.querySelectorAll(".scroll-reveal-image").forEach(img => img.classList.add("is-visible"));
+            } else {
+              project.classList.add("hide");
+            }
+          });
+        };
+      });
+    }
+
+    loadProjects();
+
+    // --- LOAD EDITABLE TEXT/IMAGES FOR HERO, FEATURED, CTA, FOOTER ---
+    (async function loadPageContent() {
+      try {
+        const res = await fetch('/api/pages/portfolio');
+        if (!res.ok) return;
+        const data = await res.json();
+        const content = data.content || {};
+
+        document.querySelectorAll('[data-key]').forEach((el) => {
+          const key = el.getAttribute('data-key');
+          if (Object.prototype.hasOwnProperty.call(content, key) && content[key]) {
+            el.textContent = content[key];
+          }
+        });
+
+        document.querySelectorAll('[data-image-key]').forEach((el) => {
+          const key = el.getAttribute('data-image-key');
+          if (Object.prototype.hasOwnProperty.call(content, key) && content[key]) {
+            el.src = content[key];
+            const lightboxParent = el.closest('[data-lightbox]');
+            if (lightboxParent) {
+              lightboxParent.setAttribute('data-lightbox', content[key]);
+            }
+          }
+        });
+      } catch (err) {
+        // Silently keep the hardcoded fallback content if this fails
+      }
+    })();
   </script>
 
 </body>
