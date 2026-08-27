@@ -90,7 +90,6 @@
     .nav-links {
       align-items: center;
       display: flex;
-      gap: clamp(16px, 4vw, 48px);
       margin-left: auto;
       list-style: none;
     }
@@ -99,6 +98,7 @@
       color: var(--ink);
       font-size: 14px;
       font-weight: 600;
+      margin: 0 20px;
       text-decoration: none;
       transition: color 0.3s ease;
     }
@@ -325,11 +325,12 @@
       }
 
       .nav-links {
-        gap: 8px;
+        justify-content: center;
       }
 
       .nav-links a {
         font-size: 11px;
+        margin: 0 6px;
       }
 
       .theme-toggle {
@@ -379,9 +380,9 @@
   </nav>
 
   <main class="figma-about">
-    <section class="figma-hero animate-on-scroll">
-      <h1>About Me</h1>
-      <p>
+    <section class="figma-hero animate-on-scroll" id="aboutHero">
+      <h1 data-key="hero_heading">About Me</h1>
+      <p data-key="hero_paragraph">
         I’m a graphic designer passionate about visual storytelling,
         typography, and thoughtful branding that helps people connect with
         ideas.
@@ -391,8 +392,8 @@
     <section class="figma-content">
       <div class="figma-story animate-on-scroll">
         <div>
-          <h2>My Story</h2>
-          <p>
+          <h2 data-key="story_heading">My Story</h2>
+          <p data-key="story_paragraph">
             I’ve always been drawn to the way a single layout, a well-chosen
             typeface, or a simple mark can turn a message into a memory. As a
             graphic designer, I partner with clients to craft visual systems
@@ -403,38 +404,39 @@
           class="figma-story-image"
           src="https://www.figma.com/api/mcp/asset/78313e8a-826e-40cb-a293-e3b33677b402.png"
           alt="Designer creating a hand-lettered layout"
+          data-image-key="story_image"
         />
       </div>
 
       <section class="figma-strengths">
-        <h2 class="animate-on-scroll">My Strengths</h2>
+        <h2 class="animate-on-scroll" data-key="strengths_heading">My Strengths</h2>
         <div class="figma-strength-grid">
           <article class="figma-strength-card animate-on-scroll delay-1">
             <div class="figma-icon"><img src="https://www.figma.com/api/mcp/asset/02a34495-6e63-4ce4-9874-f8e2b4dae576.svg" alt="" /></div>
-            <h3>Branding &amp; Identity</h3>
-            <p>I help brands find their voice through logos, color systems, typography, and guidelines that scale from business cards to websites.</p>
+            <h3 data-key="strength1_heading">Branding &amp; Identity</h3>
+            <p data-key="strength1_paragraph">I help brands find their voice through logos, color systems, typography, and guidelines that scale from business cards to websites.</p>
           </article>
           <article class="figma-strength-card animate-on-scroll delay-2">
             <div class="figma-icon"><img src="https://www.figma.com/api/mcp/asset/50868dc4-60ca-415e-8618-152511c7baf1.svg" alt="" /></div>
-            <h3>Print &amp; Digital</h3>
-            <p>From posters and brochures to social assets and websites, I design across mediums with a focus on consistency and impact.</p>
+            <h3 data-key="strength2_heading">Print &amp; Digital</h3>
+            <p data-key="strength2_paragraph">From posters and brochures to social assets and websites, I design across mediums with a focus on consistency and impact.</p>
           </article>
           <article class="figma-strength-card animate-on-scroll delay-3">
             <div class="figma-icon"><img src="https://www.figma.com/api/mcp/asset/5df3b0eb-bbcb-4082-b139-7004ebe36e52.svg" alt="" /></div>
-            <h3>Typography</h3>
-            <p>I believe type is the foundation of good design. I love pairing fonts, setting hierarchies, and refining layouts that read beautifully.</p>
+            <h3 data-key="strength3_heading">Typography</h3>
+            <p data-key="strength3_paragraph">I believe type is the foundation of good design. I love pairing fonts, setting hierarchies, and refining layouts that read beautifully.</p>
           </article>
         </div>
       </section>
 
       <div class="figma-cta animate-on-scroll">
-        <a href="contact.html">Let’s Work Together</a>
+        <a href="contact.html" data-key="cta_text">Let’s Work Together</a>
       </div>
     </section>
   </main>
 
   <footer>
-    <div>© 2026 Peempdesigner. All Rights Reserved.</div>
+    <div data-key="footer_text">© 2026 Peempdesigner. All Rights Reserved.</div>
   </footer>
 
   <script>
@@ -490,6 +492,47 @@
     document.querySelectorAll('.animate-on-scroll').forEach((el) => {
       observer.observe(el);
     });
+
+    // --- LOAD EDITABLE TEXT FROM ADMIN CONTENT ---
+    // Every element with a data-key attribute gets its text filled in from
+    // the server. If the fetch fails for any reason, the original hardcoded
+    // text above stays visible, so the page never breaks for visitors.
+    (async function loadPageContent() {
+      try {
+        const res = await fetch('/api/pages/about');
+        if (!res.ok) return;
+        const data = await res.json();
+        const content = data.content || {};
+
+        document.querySelectorAll('[data-key]').forEach((el) => {
+          const key = el.getAttribute('data-key');
+          if (Object.prototype.hasOwnProperty.call(content, key) && content[key]) {
+            el.textContent = content[key];
+          }
+        });
+
+        // Regular <img> elements: swap their src
+        document.querySelectorAll('[data-image-key]').forEach((el) => {
+          const key = el.getAttribute('data-image-key');
+          if (Object.prototype.hasOwnProperty.call(content, key) && content[key]) {
+            el.src = content[key];
+          }
+        });
+
+        // The hero section's background image is set via CSS, not an <img> tag,
+        // so it needs its own handling: rebuild the same dark overlay gradient
+        // used in the stylesheet, layered over the custom image.
+        if (content.hero_bg_image) {
+          const heroEl = document.getElementById('aboutHero');
+          if (heroEl) {
+            heroEl.style.background =
+              `linear-gradient(rgba(17, 24, 39, 0.75), rgba(17, 24, 39, 0.75)), url("${content.hero_bg_image}") center / cover`;
+          }
+        }
+      } catch (err) {
+        // Silently keep the hardcoded fallback text if this fails
+      }
+    })();
   </script>
 
 </body>
