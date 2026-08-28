@@ -263,6 +263,58 @@
     margin-bottom: 0;
   }
 
+  .image-field {
+    background: #101215;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+
+  .image-preview {
+    display: block;
+    max-width: 100%;
+    max-height: 160px;
+    object-fit: contain;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    background: #050607;
+  }
+
+  .image-field-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .image-url-input {
+    flex: 1;
+    margin-bottom: 0 !important;
+  }
+
+  .upload-btn {
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .upload-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .image-upload-status {
+    font-size: 12px;
+    margin-top: 8px;
+    min-height: 14px;
+  }
+
   .page-editor-actions {
     display: flex;
     gap: 8px;
@@ -430,6 +482,10 @@
           <h3>Pages</h3>
           <p>Edit your live website text</p>
         </div>
+        <div class="card" id="open-projects-card">
+          <h3>Portfolio Projects</h3>
+          <p>Add, edit, and remove projects</p>
+        </div>
         <div class="card">
           <h3>Orders</h3>
           <p>View recent orders</p>
@@ -505,6 +561,73 @@
     </div>
   </div>
 
+  <!-- Portfolio Projects management -->
+  <div id="projects-view">
+    <div class="topbar">
+      <div class="topbar-actions">
+        <button class="back-btn" id="back-to-dashboard-from-projects">&larr; Back</button>
+        <h1>Portfolio Projects</h1>
+      </div>
+      <button class="logout-btn" id="logout-btn-projects">Log out</button>
+    </div>
+    <div class="panel">
+      <div class="users-header">
+        <span style="color: var(--muted); font-size: 13px;" id="project-count">Loading…</span>
+        <button class="add-user-btn" id="open-add-project-modal">+ Add project</button>
+      </div>
+      <div id="projects-table-wrap"></div>
+    </div>
+  </div>
+
+  <!-- Add/Edit project modal -->
+  <div class="modal-overlay" id="project-modal-overlay">
+    <div class="modal">
+      <h2 id="project-modal-title">Add project</h2>
+      <div class="error-msg" id="project-modal-error"></div>
+      <form id="project-form">
+        <input type="hidden" id="project-id">
+        <label for="project-title">Title</label>
+        <input type="text" id="project-title" required>
+        <label for="project-category">Category</label>
+        <select id="project-category">
+          <option value="branding">Branding</option>
+          <option value="logos">Logos</option>
+          <option value="posters">Posters</option>
+          <option value="social">Social Media</option>
+          <option value="web">Web Design</option>
+        </select>
+        <label>Image</label>
+        <div class="image-field" data-image-field-key="project-image">
+          <img class="image-preview" id="project-image-preview" src="" style="display:none;" alt="">
+          <div class="image-field-controls">
+            <input type="text" id="project-image-url" class="image-url-input" placeholder="Paste an image URL…">
+            <label class="upload-btn">
+              Upload file
+              <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" id="project-image-file" style="display:none;">
+            </label>
+          </div>
+          <p class="image-upload-status" id="project-image-status"></p>
+        </div>
+        <div class="modal-actions" style="margin-top: 20px;">
+          <button type="button" class="btn-secondary" id="cancel-project-modal">Cancel</button>
+          <button type="submit" id="save-project-btn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete project confirm modal -->
+  <div class="modal-overlay" id="delete-project-modal-overlay">
+    <div class="modal">
+      <h2>Delete this project?</h2>
+      <p style="color: var(--muted); font-size: 13px; margin: 0 0 20px;" id="delete-project-label"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="cancel-delete-project">Cancel</button>
+        <button type="button" class="btn-danger" id="confirm-delete-project">Delete</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Pages: list of editable pages -->
   <div id="pages-view">
     <div class="topbar">
@@ -522,6 +645,18 @@
         <div class="card" data-page="about">
           <h3>About</h3>
           <p>Hero, story, and strengths text</p>
+        </div>
+        <div class="card" data-page="contact">
+          <h3>Contact</h3>
+          <p>Hero, headings, and footer text</p>
+        </div>
+        <div class="card" data-page="home">
+          <h3>Home</h3>
+          <p>Hero, services, and footer text</p>
+        </div>
+        <div class="card" data-page="portfolio">
+          <h3>Portfolio</h3>
+          <p>Hero, featured project, and footer text</p>
         </div>
       </div>
     </div>
@@ -590,6 +725,7 @@
   const contentView = document.getElementById("content-view");
   const pagesView = document.getElementById("pages-view");
   const pageEditorView = document.getElementById("page-editor-view");
+  const projectsView = document.getElementById("projects-view");
 
   const loginForm = document.getElementById("login-form");
   const loginError = document.getElementById("login-error");
@@ -612,6 +748,7 @@
     contentView.style.display = "none";
     pagesView.style.display = "none";
     pageEditorView.style.display = "none";
+    projectsView.style.display = "none";
   }
 
   function showLogin() { hideAllViews(); loginView.style.display = "block"; }
@@ -619,6 +756,7 @@
   function showUsers() { hideAllViews(); usersView.style.display = "block"; loadUsers(); }
   function showContent() { hideAllViews(); contentView.style.display = "block"; loadContent(); }
   function showPagesList() { hideAllViews(); pagesView.style.display = "block"; }
+  function showProjects() { hideAllViews(); projectsView.style.display = "block"; loadProjects(); }
 
   function showError(el, message) {
     el.textContent = message;
@@ -683,6 +821,7 @@
   document.getElementById("logout-btn-content").addEventListener("click", doLogout);
   document.getElementById("logout-btn-pages").addEventListener("click", doLogout);
   document.getElementById("logout-btn-page-editor").addEventListener("click", doLogout);
+  document.getElementById("logout-btn-projects").addEventListener("click", doLogout);
 
   // ---------- Navigation ----------
   document.getElementById("open-users-card-2").addEventListener("click", showUsers);
@@ -692,6 +831,8 @@
   document.getElementById("open-pages-card").addEventListener("click", showPagesList);
   document.getElementById("back-to-dashboard-from-pages").addEventListener("click", showDashboard);
   document.getElementById("back-to-pages-list").addEventListener("click", showPagesList);
+  document.getElementById("open-projects-card").addEventListener("click", showProjects);
+  document.getElementById("back-to-dashboard-from-projects").addEventListener("click", showDashboard);
 
   // Clicking a page card in the Pages list opens its field editor
   document.querySelectorAll("#pages-view .card[data-page]").forEach((card) => {
@@ -1052,7 +1193,7 @@
   const pageEditorError = document.getElementById("page-editor-error");
   const pageEditorSuccess = document.getElementById("page-editor-success");
 
-  const PAGE_LABELS = { about: "About page" };
+  const PAGE_LABELS = { about: "About page", contact: "Contact page", home: "Home page", portfolio: "Portfolio page" };
   let currentPageName = null;
 
   function fieldKeyToLabel(key) {
@@ -1079,15 +1220,38 @@
       }
 
       const data = await res.json();
-      const fields = data.fields || [];
+      const textFields = (data.fields && data.fields.text) || [];
+      const imageFields = (data.fields && data.fields.images) || [];
       const content = data.content || {};
 
-      if (fields.length === 0) {
+      if (textFields.length === 0 && imageFields.length === 0) {
         pageEditorForm.innerHTML = '<p style="color: var(--muted); font-size: 13px;">No editable fields found for this page.</p>';
         return;
       }
 
-      pageEditorForm.innerHTML = fields.map((key) => {
+      const imageFieldsHtml = imageFields.map((key) => {
+        const value = content[key] || "";
+        const previewSrc = value || "";
+        const previewStyle = previewSrc ? "" : "display:none;";
+        return `
+          <div class="field-group">
+            <label>${escapeHtml(fieldKeyToLabel(key))}</label>
+            <div class="image-field" data-image-field-key="${key}">
+              <img class="image-preview" src="${escapeHtml(previewSrc)}" style="${previewStyle}" alt="">
+              <div class="image-field-controls">
+                <input type="text" data-field-key="${key}" class="image-url-input" placeholder="Paste an image URL…" value="${escapeHtml(value)}">
+                <label class="upload-btn">
+                  Upload file
+                  <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" class="image-file-input" style="display:none;">
+                </label>
+              </div>
+              <p class="image-upload-status"></p>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      const textFieldsHtml = textFields.map((key) => {
         const value = content[key] || "";
         const isLong = value.length > 80 || key.includes("paragraph");
         const inputHtml = isLong
@@ -1099,11 +1263,75 @@
             ${inputHtml}
           </div>
         `;
-      }).join("") + `
+      }).join("");
+
+      pageEditorForm.innerHTML = imageFieldsHtml + textFieldsHtml + `
         <div class="page-editor-actions">
           <button type="submit">Save changes</button>
         </div>
       `;
+
+      // Wire up each image field's upload control
+      pageEditorForm.querySelectorAll(".image-field").forEach((fieldEl) => {
+        const key = fieldEl.dataset.imageFieldKey;
+        const fileInput = fieldEl.querySelector(".image-file-input");
+        const urlInput = fieldEl.querySelector(`[data-field-key="${key}"]`);
+        const previewImg = fieldEl.querySelector(".image-preview");
+        const statusEl = fieldEl.querySelector(".image-upload-status");
+
+        // Typing/pasting a URL directly updates the live preview
+        urlInput.addEventListener("input", () => {
+          if (urlInput.value) {
+            previewImg.src = urlInput.value;
+            previewImg.style.display = "block";
+          } else {
+            previewImg.style.display = "none";
+          }
+        });
+
+        fileInput.addEventListener("change", async () => {
+          const file = fileInput.files[0];
+          if (!file) return;
+
+          statusEl.textContent = "Uploading…";
+          statusEl.style.color = "var(--muted)";
+
+          try {
+            const dataUrl = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+
+            const res = await fetch("/api/admin/upload", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "same-origin",
+              body: JSON.stringify({ image: dataUrl })
+            });
+            const uploadData = await res.json();
+
+            if (res.status === 401) { showLogin(); return; }
+
+            if (res.ok && uploadData.success) {
+              urlInput.value = uploadData.url;
+              previewImg.src = uploadData.url;
+              previewImg.style.display = "block";
+              statusEl.textContent = "Uploaded. Click \"Save changes\" to apply.";
+              statusEl.style.color = "var(--success)";
+            } else {
+              statusEl.textContent = uploadData.error || "Upload failed.";
+              statusEl.style.color = "#ff8b8e";
+            }
+          } catch (err) {
+            statusEl.textContent = "Upload failed. Please try again.";
+            statusEl.style.color = "#ff8b8e";
+          } finally {
+            fileInput.value = "";
+          }
+        });
+      });
     } catch (err) {
       pageEditorForm.innerHTML = '<p style="color: var(--muted); font-size: 13px;">Could not load this page. Try again.</p>';
     }
@@ -1146,6 +1374,248 @@
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = "Save changes";
+    }
+  });
+
+  // ---------- Portfolio Projects manager ----------
+  const projectModalOverlay = document.getElementById("project-modal-overlay");
+  const projectForm = document.getElementById("project-form");
+  const projectModalTitle = document.getElementById("project-modal-title");
+  const projectModalError = document.getElementById("project-modal-error");
+  const saveProjectBtn = document.getElementById("save-project-btn");
+
+  const PROJECT_CATEGORY_LABELS = {
+    branding: "Branding", logos: "Logos", posters: "Posters",
+    social: "Social Media", web: "Web Design"
+  };
+
+  async function loadProjects() {
+    const wrap = document.getElementById("projects-table-wrap");
+    const countLabel = document.getElementById("project-count");
+    wrap.innerHTML = '<div class="empty-state">Loading projects…</div>';
+
+    try {
+      const res = await fetch("/api/admin/portfolio-projects", { credentials: "same-origin" });
+      if (res.status === 401) { showLogin(); return; }
+
+      const data = await res.json();
+      const projects = data.projects || [];
+
+      countLabel.textContent = projects.length === 1 ? "1 project" : `${projects.length} projects`;
+
+      if (projects.length === 0) {
+        wrap.innerHTML = '<div class="empty-state">No projects yet. Click "+ Add project" to create one.</div>';
+        return;
+      }
+
+      const rows = projects.map(p => `
+        <tr>
+          <td><img src="${escapeHtml(p.image)}" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:6px;display:block;"></td>
+          <td>${escapeHtml(p.title)}</td>
+          <td>${escapeHtml(PROJECT_CATEGORY_LABELS[p.category] || p.category)}</td>
+          <td>
+            <div class="row-actions">
+              <button class="icon-btn edit-project-btn" data-id="${p.id}">Edit</button>
+              <button class="icon-btn delete delete-project-btn" data-id="${p.id}" data-title="${escapeHtml(p.title)}">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+
+      wrap.innerHTML = `
+        <table>
+          <thead><tr><th>Image</th><th>Title</th><th>Category</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+
+      wrap.querySelectorAll(".edit-project-btn").forEach(btn => {
+        btn.addEventListener("click", () => openEditProjectModal(btn.dataset.id, projects));
+      });
+      wrap.querySelectorAll(".delete-project-btn").forEach(btn => {
+        btn.addEventListener("click", () => openDeleteProjectModal(btn.dataset.id, btn.dataset.title));
+      });
+    } catch (err) {
+      wrap.innerHTML = '<div class="empty-state">Could not load projects. Try refreshing.</div>';
+    }
+  }
+
+  function resetProjectImagePreview() {
+    const preview = document.getElementById("project-image-preview");
+    preview.src = "";
+    preview.style.display = "none";
+    document.getElementById("project-image-status").textContent = "";
+  }
+
+  function openAddProjectModal() {
+    projectModalTitle.textContent = "Add project";
+    document.getElementById("project-id").value = "";
+    document.getElementById("project-title").value = "";
+    document.getElementById("project-category").value = "branding";
+    document.getElementById("project-image-url").value = "";
+    resetProjectImagePreview();
+    hideError(projectModalError);
+    projectModalOverlay.style.display = "flex";
+  }
+
+  function openEditProjectModal(id, projects) {
+    const project = projects.find(p => p.id === id);
+    if (!project) return;
+    projectModalTitle.textContent = "Edit project";
+    document.getElementById("project-id").value = project.id;
+    document.getElementById("project-title").value = project.title;
+    document.getElementById("project-category").value = project.category;
+    document.getElementById("project-image-url").value = project.image;
+    const preview = document.getElementById("project-image-preview");
+    preview.src = project.image;
+    preview.style.display = "block";
+    document.getElementById("project-image-status").textContent = "";
+    hideError(projectModalError);
+    projectModalOverlay.style.display = "flex";
+  }
+
+  document.getElementById("open-add-project-modal").addEventListener("click", openAddProjectModal);
+  document.getElementById("cancel-project-modal").addEventListener("click", () => {
+    projectModalOverlay.style.display = "none";
+  });
+
+  // Live preview when typing/pasting an image URL
+  document.getElementById("project-image-url").addEventListener("input", (e) => {
+    const preview = document.getElementById("project-image-preview");
+    if (e.target.value) {
+      preview.src = e.target.value;
+      preview.style.display = "block";
+    } else {
+      preview.style.display = "none";
+    }
+  });
+
+  // Upload handling for the project image field
+  document.getElementById("project-image-file").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const statusEl = document.getElementById("project-image-status");
+    const urlInput = document.getElementById("project-image-url");
+    const preview = document.getElementById("project-image-preview");
+
+    statusEl.textContent = "Uploading…";
+    statusEl.style.color = "var(--muted)";
+
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ image: dataUrl })
+      });
+      const uploadData = await res.json();
+
+      if (res.status === 401) { showLogin(); return; }
+
+      if (res.ok && uploadData.success) {
+        urlInput.value = uploadData.url;
+        preview.src = uploadData.url;
+        preview.style.display = "block";
+        statusEl.textContent = "Uploaded.";
+        statusEl.style.color = "var(--success)";
+      } else {
+        statusEl.textContent = uploadData.error || "Upload failed.";
+        statusEl.style.color = "#ff8b8e";
+      }
+    } catch (err) {
+      statusEl.textContent = "Upload failed. Please try again.";
+      statusEl.style.color = "#ff8b8e";
+    } finally {
+      e.target.value = "";
+    }
+  });
+
+  projectForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    hideError(projectModalError);
+    saveProjectBtn.disabled = true;
+    saveProjectBtn.textContent = "Saving…";
+
+    const id = document.getElementById("project-id").value;
+    const payload = {
+      title: document.getElementById("project-title").value,
+      category: document.getElementById("project-category").value,
+      image: document.getElementById("project-image-url").value
+    };
+
+    try {
+      const url = id ? `/api/admin/portfolio-projects/${id}` : "/api/admin/portfolio-projects";
+      const method = id ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (res.status === 401) { showLogin(); return; }
+
+      if (res.ok && data.success) {
+        projectModalOverlay.style.display = "none";
+        showToast(id ? "Project updated." : "Project added.");
+        loadProjects();
+      } else {
+        showError(projectModalError, data.error || "Could not save project.");
+      }
+    } catch (err) {
+      showError(projectModalError, "Something went wrong. Please try again.");
+    } finally {
+      saveProjectBtn.disabled = false;
+      saveProjectBtn.textContent = "Save";
+    }
+  });
+
+  const deleteProjectModalOverlay = document.getElementById("delete-project-modal-overlay");
+  const deleteProjectLabel = document.getElementById("delete-project-label");
+  let pendingDeleteProjectId = null;
+
+  function openDeleteProjectModal(id, title) {
+    pendingDeleteProjectId = id;
+    deleteProjectLabel.textContent = `"${title}" will be permanently removed.`;
+    deleteProjectModalOverlay.style.display = "flex";
+  }
+
+  document.getElementById("cancel-delete-project").addEventListener("click", () => {
+    deleteProjectModalOverlay.style.display = "none";
+    pendingDeleteProjectId = null;
+  });
+
+  document.getElementById("confirm-delete-project").addEventListener("click", async () => {
+    if (!pendingDeleteProjectId) return;
+    try {
+      const res = await fetch(`/api/admin/portfolio-projects/${pendingDeleteProjectId}`, {
+        method: "DELETE",
+        credentials: "same-origin"
+      });
+      if (res.status === 401) { showLogin(); return; }
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast("Project deleted.");
+        loadProjects();
+      } else {
+        showToast(data.error || "Could not delete project.", true);
+      }
+    } catch (err) {
+      showToast("Something went wrong.", true);
+    } finally {
+      deleteProjectModalOverlay.style.display = "none";
+      pendingDeleteProjectId = null;
     }
   });
 
