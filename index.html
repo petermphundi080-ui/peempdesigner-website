@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, shrink-to-fit=no" />
   <title>PEEMPDESIGNER | Home</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -66,6 +66,8 @@
       color: var(--ink);
       font-family: "Poppins", sans-serif;
       transition: background 0.3s ease, color 0.3s ease;
+      max-width: 100vw;
+      overflow-x: hidden;
     }
 
     /* ================= NAVIGATION ================= */
@@ -167,12 +169,61 @@
       padding: 14px 24px;
     }
 
+    /* Hamburger menu button -- hidden on desktop, shown only on mobile */
+    .menu-toggle {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      width: 36px;
+      height: 36px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .menu-toggle span {
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: var(--ink);
+      border-radius: 2px;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+
+    .menu-toggle.open span:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+
+    .menu-toggle.open span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .menu-toggle.open span:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
+    }
+
     /* ================= HERO ================= */
 
     .hero {
+      background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url("images/hero-bg.jpg") center / cover no-repeat;
       min-height: 650px;
       overflow: hidden;
       position: relative;
+    }
+
+    /* The hero now sits on a photo background regardless of light/dark
+       theme, so its text needs fixed light colors to stay readable
+       instead of following the theme's normal heading/muted colors. */
+    .hero h1 {
+      color: #ffffff;
+    }
+
+    .hero .intro {
+      color: #f1f1f1;
     }
 
     .hero-image {
@@ -381,21 +432,50 @@
 
     @media (max-width: 850px) {
       nav {
-        height: auto;
-        padding: 15px 5%;
-        flex-wrap: wrap;
-        row-gap: 12px;
+        height: 72px;
+        padding: 0 5%;
       }
 
       .nav-links {
-        order: 3;
-        flex-basis: 100%;
-        justify-content: center;
-        margin: 5px 0 0;
+        position: absolute;
+        top: 72px;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        background: var(--bg-main);
+        border-bottom: 1px solid var(--border-color);
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        margin: 0;
+        transition: max-height 0.3s ease, opacity 0.2s ease;
+        z-index: 999;
       }
 
-      .nav-actions {
-        order: 2;
+      .nav-links.open {
+        max-height: 400px;
+        opacity: 1;
+        padding: 8px 0;
+      }
+
+      .nav-links a {
+        margin: 0;
+        padding: 14px 6%;
+        font-size: 15px;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .nav-links a.active::after {
+        display: none;
+      }
+
+      .hire-button {
+        display: none;
+      }
+
+      .menu-toggle {
+        display: flex;
       }
     }
 
@@ -411,22 +491,20 @@
       }
 
       .logo {
-        height: 52px;
-        width: 52px;
+        height: 38px;
+        width: 38px;
       }
 
-      .nav-links a {
-        font-size: 13px;
-        margin: 0 10px;
-      }
-
-      .hire-button {
-        font-size: 12px;
-        padding: 10px 18px;
+      .theme-toggle {
+        font-size: 11px;
+        padding: 5px 10px;
+        margin-left: 4px;
+        margin-right: 4px;
+        gap: 3px;
       }
 
       .hero {
-        min-height: 420px;
+        min-height: 460px;
         overflow: hidden;
         position: relative;
       }
@@ -437,17 +515,18 @@
         top: 0;
         left: auto;
         bottom: auto;
-        width: 42%;
+        width: 46%;
         height: 100%;
         opacity: 1;
-        object-position: center top;
+        object-fit: contain;
+        object-position: center bottom;
       }
 
       .hero-content {
         align-items: flex-start;
         background: none;
         justify-content: center;
-        min-height: 420px;
+        min-height: 460px;
         padding: 20px 4px 20px 20px;
         position: relative;
         width: 56%;
@@ -455,8 +534,10 @@
       }
 
       h1 {
-        font-size: clamp(24px, 8vw, 38px);
+        font-size: clamp(38px, 12vw, 60px);
+        font-weight: 800;
         letter-spacing: -1px;
+        line-height: 1;
       }
 
       .intro {
@@ -518,7 +599,7 @@
       />
     </a>
 
-    <div class="nav-links">
+    <div class="nav-links" id="navLinks">
       <a href="#home" class="active">Home</a>
       <a href="about.html">About</a>
       <a href="portfolio.html">Portfolio</a>
@@ -531,6 +612,9 @@
       </button>
       <button class="hire-button" onclick="location.href='contact.html'" data-key="hire_button_text">
         Hire Me
+      </button>
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
       </button>
     </div>
   </nav>
@@ -604,6 +688,27 @@
 
   <!-- JAVASCRIPT -->
   <script>
+    // Hamburger Menu Logic (mobile)
+    const menuToggle = document.getElementById('menuToggle');
+    const navLinks = document.getElementById('navLinks');
+
+    if (menuToggle && navLinks) {
+      menuToggle.addEventListener('click', () => {
+        const isOpen = navLinks.classList.toggle('open');
+        menuToggle.classList.toggle('open', isOpen);
+        menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+
+      // Close the menu after tapping a link
+      navLinks.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => {
+          navLinks.classList.remove('open');
+          menuToggle.classList.remove('open');
+          menuToggle.setAttribute('aria-expanded', 'false');
+        });
+      });
+    }
+
     // Theme Toggle Logic
     const toggleBtn = document.getElementById('themeToggle');
     const themeIcon = document.getElementById('themeIcon');
