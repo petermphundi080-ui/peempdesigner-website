@@ -255,7 +255,18 @@
     document.title = `${title} | PEEMPDESIGNER`;
     document.getElementById("project-title").textContent = title;
 
-    if (imagePath && imagePath.startsWith("images/")) {
+    // Accept image paths under an "images/" folder, whether or not they
+    // have a leading slash (mediaStore.saveBase64Image returns paths like
+    // "/images/uploads/x.png" -- with a leading slash) and regardless of
+    // case. The previous check only accepted an exact lowercase
+    // "images/" prefix with no leading slash, so every server-generated
+    // upload path failed this check and fell straight to the error state,
+    // even when the image itself loaded fine.
+    const isValidProjectImagePath =
+      typeof imagePath === "string" &&
+      /^\/?images\//i.test(imagePath);
+
+    if (isValidProjectImagePath) {
       image.src = imagePath;
       image.alt = title;
       image.addEventListener("error", () => {
