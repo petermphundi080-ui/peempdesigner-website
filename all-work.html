@@ -181,12 +181,6 @@
       width: 100%;
     }
 
-    .work-card:nth-child(2) img,
-    .work-card:nth-child(4) img {
-      object-fit: cover;
-      padding: 0;
-    }
-
     .work-card-content {
       padding: 22px 24px 26px;
     }
@@ -203,6 +197,13 @@
       color: var(--muted);
       font-size: 13px;
       transition: color 0.3s ease;
+    }
+
+    .work-empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 60px 20px;
+      grid-column: 1 / -1;
     }
 
     /* ================= RESPONSIVE ================= */
@@ -264,27 +265,8 @@
       <p>Explore the complete collection of branding, poster, logo, and social media projects.</p>
     </section>
 
-    <section class="work-grid">
-      <article class="work-card">
-        <img src="images/64659a13-022c-44e1-a26b-6ec3b8d76d8f.png" alt="Mavunex brand identity" />
-        <div class="work-card-content"><h2>Mavunex</h2><p>Brand Identity</p></div>
-      </article>
-      <article class="work-card">
-        <img src="images/Shawarma.png" alt="Shawarma campaign" />
-        <div class="work-card-content"><h2>Shawarma Campaign</h2><p>Poster Design</p></div>
-      </article>
-      <article class="work-card">
-        <img src="images/b1837849-135a-42ae-b80f-9dc40f868238.png" alt="Elie’s Cosmetics logo mark" />
-        <div class="work-card-content"><h2>Elie’s Logo Mark</h2><p>Logo Design</p></div>
-      </article>
-      <article class="work-card">
-        <img src="images/sports shoes.png" alt="Sports shoe campaign" />
-        <div class="work-card-content"><h2>Sports Shoes</h2><p>Campaign Design</p></div>
-      </article>
-      <article class="work-card">
-        <img src="images/Elie`s.png" alt="Elie’s Cosmetics visual identity" />
-        <div class="work-card-content"><h2>Elie’s Visual Identity</h2><p>Brand Identity</p></div>
-      </article>
+    <section class="work-grid" id="workGrid">
+      <div class="work-empty">Loading projects…</div>
     </section>
   </main>
 
@@ -312,6 +294,58 @@
       themeIcon.textContent = t === 'dark' ? '☀️' : '🌙';
       themeText.textContent = t === 'dark' ? 'Light' : 'Dark';
     }
+
+    // Same category labels used on the Portfolio page, so wording matches
+    const CATEGORY_LABELS = {
+      branding: "Brand Identity",
+      logos: "Logo Design",
+      posters: "Poster Design",
+      social: "Social Media Design",
+      web: "Web Design"
+    };
+
+    function escapeHtml(str) {
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // --- LOAD ALL PROJECTS FROM THE SAME PORTFOLIO MANAGER ---
+    // Any project added, edited, or removed in the admin panel (including
+    // uploaded images) automatically appears here too, since this reads
+    // from the exact same list as the Portfolio page.
+    async function loadAllWork() {
+      const grid = document.getElementById('workGrid');
+
+      try {
+        const res = await fetch('/api/portfolio-projects');
+        if (!res.ok) throw new Error('Failed to load');
+        const data = await res.json();
+        const projects = data.projects || [];
+
+        if (projects.length === 0) {
+          grid.innerHTML = '<div class="work-empty">No projects yet.</div>';
+          return;
+        }
+
+        grid.innerHTML = projects.map((p) => {
+          const categoryLabel = CATEGORY_LABELS[p.category] || p.category;
+          return `
+            <article class="work-card">
+              <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.title)}" />
+              <div class="work-card-content">
+                <h2>${escapeHtml(p.title)}</h2>
+                <p>${escapeHtml(categoryLabel)}</p>
+              </div>
+            </article>
+          `;
+        }).join('');
+      } catch (err) {
+        grid.innerHTML = '<div class="work-empty">Could not load projects. Please refresh.</div>';
+      }
+    }
+
+    loadAllWork();
   </script>
 </body>
 </html>
