@@ -932,7 +932,14 @@
         const res = await fetch('/api/portfolio-projects');
         if (!res.ok) throw new Error("Failed to load");
         const data = await res.json();
-        const projects = data.projects || [];
+
+        // Only show projects that haven't been toggled off in the admin
+        // panel's "Show on Portfolio page" setting. Projects with this
+        // toggle off still appear on all-work.html -- that page loads
+        // from the same endpoint without this filter.
+        const projects = (data.projects || []).filter(
+          (p) => p.show_on_portfolio !== false
+        );
 
         if (projects.length === 0) {
           grid.innerHTML = '<div class="portfolio-empty">No projects yet.</div>';
