@@ -281,29 +281,6 @@ function readUploadBody(request) {
    RESEND EMAIL
 ========================================================= */
 
-/*
-   This uses the Resend API directly.
-
-   Required Render environment variables:
-
-   RESEND_API_KEY
-   EMAIL_TO
-
-   Optional:
-
-   RESEND_FROM_EMAIL
-
-   Example:
-
-   RESEND_API_KEY=re_xxxxxxxxx
-   EMAIL_TO=your@email.com
-   RESEND_FROM_EMAIL=onboarding@resend.dev
-
-   If you have verified your own domain with Resend,
-   use an email address from that domain for
-   RESEND_FROM_EMAIL.
-*/
-
 function sendEmailWithResend({
     from,
     to,
@@ -468,10 +445,6 @@ async function handleContact(request, response) {
             return;
         }
 
-        /*
-           Check Resend configuration.
-        */
-
         if (!process.env.RESEND_API_KEY) {
             console.error(
                 "RESEND_API_KEY is missing."
@@ -497,12 +470,6 @@ async function handleContact(request, response) {
 
             return;
         }
-
-        /*
-           Resend's testing sender.
-           If you have a verified domain, replace this
-           through the Render environment variable.
-        */
 
         const fromEmail =
             (
@@ -950,7 +917,7 @@ async function handleImageUpload(
                 : "";
 
         const url =
-            mediaStore.saveBase64Image(
+            await mediaStore.uploadToCloudinary(
                 imageData
             );
 
@@ -1149,17 +1116,12 @@ const server = http.createServer(
             () => response.destroy()
         );
 
-        /* OPTIONS */
-
         if (request.method === "OPTIONS") {
             setSecurityHeaders(response);
             response.writeHead(204);
             response.end();
             return;
         }
-
-
-        /* REQUEST URL */
 
         const protocol =
             getRequestProtocol(request);
@@ -1175,11 +1137,6 @@ const server = http.createServer(
             ).pathname;
 
         setSecurityHeaders(response);
-
-
-        /* =================================================
-           CONTACT RATE LIMIT
-        ================================================= */
 
         if (
             requestPath === "/api/contact" &&
@@ -1221,11 +1178,6 @@ const server = http.createServer(
                 recentRequests
             );
         }
-
-
-        /* =================================================
-           ADMIN LOGIN
-        ================================================= */
 
         if (
             request.method === "POST" &&
@@ -1349,11 +1301,6 @@ const server = http.createServer(
             return;
         }
 
-
-        /* =================================================
-           ADMIN LOGOUT
-        ================================================= */
-
         if (
             request.method === "POST" &&
             requestPath ===
@@ -1398,11 +1345,6 @@ const server = http.createServer(
             return;
         }
 
-
-        /* =================================================
-           ADMIN DASHBOARD
-        ================================================= */
-
         if (
             request.method === "GET" &&
             requestPath ===
@@ -1426,11 +1368,6 @@ const server = http.createServer(
 
             return;
         }
-
-
-        /* =================================================
-           USERS API
-        ================================================= */
 
         const usersListMatch =
             requestPath ===
@@ -1491,11 +1428,6 @@ const server = http.createServer(
             return;
         }
 
-
-        /* =================================================
-           CONTENT API
-        ================================================= */
-
         const contentListMatch =
             requestPath ===
             "/api/admin/content";
@@ -1555,11 +1487,6 @@ const server = http.createServer(
             return;
         }
 
-
-        /* =================================================
-           PUBLIC PAGE CONTENT
-        ================================================= */
-
         const publicPageMatch =
             requestPath.match(
                 /^\/api\/pages\/([a-z0-9_-]+)$/
@@ -1577,11 +1504,6 @@ const server = http.createServer(
 
             return;
         }
-
-
-        /* =================================================
-           ADMIN PAGE CONTENT
-        ================================================= */
 
         const adminPageMatch =
             requestPath.match(
@@ -1614,11 +1536,6 @@ const server = http.createServer(
             return;
         }
 
-
-        /* =================================================
-           IMAGE UPLOAD
-        ================================================= */
-
         if (
             request.method === "POST" &&
             requestPath ===
@@ -1632,11 +1549,6 @@ const server = http.createServer(
             return;
         }
 
-
-        /* =================================================
-           PUBLIC PORTFOLIO
-        ================================================= */
-
         if (
             request.method === "GET" &&
             requestPath ===
@@ -1649,11 +1561,6 @@ const server = http.createServer(
 
             return;
         }
-
-
-        /* =================================================
-           ADMIN PORTFOLIO
-        ================================================= */
 
         const projectsListMatch =
             requestPath ===
@@ -1714,11 +1621,6 @@ const server = http.createServer(
             return;
         }
 
-
-        /* =================================================
-           CONTACT
-        ================================================= */
-
         if (
             request.method === "POST" &&
             requestPath ===
@@ -1732,11 +1634,6 @@ const server = http.createServer(
             return;
         }
 
-
-        /* =================================================
-           HEALTH CHECK
-        ================================================= */
-
         if (
             requestPath ===
                 "/api/health" ||
@@ -1748,11 +1645,6 @@ const server = http.createServer(
 
             return;
         }
-
-
-        /* =================================================
-           METHOD CHECK
-        ================================================= */
 
         if (
             request.method !== "GET" &&
@@ -1766,11 +1658,6 @@ const server = http.createServer(
             return;
         }
 
-
-        /* =================================================
-           STATIC FILE SERVING
-        ================================================= */
-
         const requestedFile =
             requestPath === "/"
                 ? "index.html"
@@ -1778,13 +1665,10 @@ const server = http.createServer(
                     requestPath.slice(1)
                 );
 
-        // Case-insensitive check: uploaded image paths must resolve
-        // correctly whether the request path is "images/..." or
-        // "Images/..." (URL paths are case-sensitive on Linux hosts,
-        // so a mismatched-case reference from the database/frontend
-        // would otherwise 404 here even though the file exists on disk).
         const isImageAsset =
-            /^images\//i.test(requestedFile);
+            requestedFile.startsWith(
+                "images/"
+            );
 
         if (
             !publicFiles.has(
@@ -1799,22 +1683,10 @@ const server = http.createServer(
             return;
         }
 
-        // Normalize the on-disk lookup path to lowercase "images/..."
-        // so a case-mismatched request (e.g. "Images/uploads/x.png")
-        // still finds the actual file, which mediaStore always saves
-        // under lowercase "images/uploads/".
-        const resolvedRequestedFile =
-            isImageAsset
-                ? requestedFile.replace(
-                    /^images\//i,
-                    "images/"
-                )
-                : requestedFile;
-
         const filePath =
             path.resolve(
                 publicDirectory,
-                resolvedRequestedFile
+                requestedFile
             );
 
         serveFile(
