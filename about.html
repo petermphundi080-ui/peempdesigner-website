@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, shrink-to-fit=no" />
   <title>About | PEEMPDESIGNER</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -58,6 +58,7 @@
       background: var(--bg-main);
       color: var(--ink);
       font-family: "Poppins", sans-serif;
+      max-width: 100vw;
       overflow-x: hidden;
       transition: background-color 0.3s ease, color 0.3s ease;
     }
@@ -127,6 +128,49 @@
 
     .theme-toggle:hover {
       border-color: var(--orange);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+    }
+
+    /* Hamburger menu button -- hidden on desktop, shown only on mobile */
+    .menu-toggle {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      width: 36px;
+      height: 36px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 0;
+      margin-left: 10px;
+    }
+
+    .menu-toggle span {
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: var(--ink);
+      border-radius: 2px;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+
+    .menu-toggle.open span:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+
+    .menu-toggle.open span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .menu-toggle.open span:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
     }
 
     /* ABOUT PAGE STYLES */
@@ -324,19 +368,54 @@
         padding: 0 16px;
       }
 
+      .logo {
+        font-size: 17px;
+      }
+
       .nav-links {
-        justify-content: center;
+        position: absolute;
+        top: 72px;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        background: var(--bg-main);
+        border-bottom: 1px solid var(--border);
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        margin: 0;
+        transition: max-height 0.3s ease, opacity 0.2s ease;
+        z-index: 999;
+      }
+
+      .nav-links.open {
+        max-height: 400px;
+        opacity: 1;
+        padding: 8px 0;
+      }
+
+      .nav-links li {
+        width: 100%;
       }
 
       .nav-links a {
-        font-size: 11px;
-        margin: 0 6px;
+        display: block;
+        margin: 0;
+        padding: 14px 6%;
+        font-size: 15px;
+        border-bottom: 1px solid var(--border);
       }
 
       .theme-toggle {
         margin-left: 8px;
-        padding: 6px 10px;
+        padding: 5px 10px;
         font-size: 11px;
+        gap: 3px;
+      }
+
+      .menu-toggle {
+        display: flex;
       }
 
       .figma-hero {
@@ -365,7 +444,7 @@
   <nav>
     <a href="index.html" class="logo">PEEMPDESIGNER</a>
 
-    <ul class="nav-links">
+    <ul class="nav-links" id="navLinks">
       <li><a href="index.html">Home</a></li>
       <li><a href="about.html" class="active">About</a></li>
       <li><a href="index.html#services">Services</a></li>
@@ -373,10 +452,15 @@
       <li><a href="contact.html">Contact</a></li>
     </ul>
 
-    <!-- MODE TOGGLE BUTTON -->
-    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-      <span id="themeIcon">🌙</span> <span id="themeText">Dark</span>
-    </button>
+    <div class="nav-actions">
+      <!-- MODE TOGGLE BUTTON -->
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <span id="themeIcon">🌙</span> <span id="themeText">Dark</span>
+      </button>
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
   </nav>
 
   <main class="figma-about">
@@ -440,6 +524,26 @@
   </footer>
 
   <script>
+    // --- HAMBURGER MENU (mobile) ---
+    const menuToggle = document.getElementById('menuToggle');
+    const navLinks = document.getElementById('navLinks');
+
+    if (menuToggle && navLinks) {
+      menuToggle.addEventListener('click', () => {
+        const isOpen = navLinks.classList.toggle('open');
+        menuToggle.classList.toggle('open', isOpen);
+        menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+
+      navLinks.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => {
+          navLinks.classList.remove('open');
+          menuToggle.classList.remove('open');
+          menuToggle.setAttribute('aria-expanded', 'false');
+        });
+      });
+    }
+
     // --- LIGHT/DARK MODE TOGGLE ---
     const toggleBtn = document.getElementById('themeToggle');
     const themeIcon = document.getElementById('themeIcon');
