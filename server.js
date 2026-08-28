@@ -6,11 +6,11 @@ const cookie = require("cookie");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 
-const usersStore = require("./lib/usersstore");
-const contentStore = require("./lib/contentstore");
-const pageContentStore = require("./lib/pagecontentstore");
-const mediaStore = require("./lib/mediastore");
-const portfolioStore = require("./lib/portfoliostore");
+const usersStore = require("./lib/usersStore");
+const contentStore = require("./lib/contentStore");
+const pageContentStore = require("./lib/pageContentStore");
+const mediaStore = require("./lib/mediaStore");
+const portfolioStore = require("./lib/portfolioStore");
 
 require("dotenv").config();
 
@@ -1778,10 +1778,13 @@ const server = http.createServer(
                     requestPath.slice(1)
                 );
 
+        // Case-insensitive check: uploaded image paths must resolve
+        // correctly whether the request path is "images/..." or
+        // "Images/..." (URL paths are case-sensitive on Linux hosts,
+        // so a mismatched-case reference from the database/frontend
+        // would otherwise 404 here even though the file exists on disk).
         const isImageAsset =
-            requestedFile.startsWith(
-                "images/"
-            );
+            /^images\//i.test(requestedFile);
 
         if (
             !publicFiles.has(
@@ -1796,10 +1799,22 @@ const server = http.createServer(
             return;
         }
 
+        // Normalize the on-disk lookup path to lowercase "images/..."
+        // so a case-mismatched request (e.g. "Images/uploads/x.png")
+        // still finds the actual file, which mediaStore always saves
+        // under lowercase "images/uploads/".
+        const resolvedRequestedFile =
+            isImageAsset
+                ? requestedFile.replace(
+                    /^images\//i,
+                    "images/"
+                )
+                : requestedFile;
+
         const filePath =
             path.resolve(
                 publicDirectory,
-                requestedFile
+                resolvedRequestedFile
             );
 
         serveFile(
