@@ -75,7 +75,7 @@ function setSecurityHeaders(response) {
         "style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; " +
         "font-src https://fonts.gstatic.com; " +
         "script-src 'self' 'unsafe-inline'; " +
-        "img-src 'self' data: https://www.figma.com https://*.figma.com; " +
+        "img-src 'self' data: https://www.figma.com https://*.figma.com https://res.cloudinary.com; " +
         "form-action 'self'; " +
         "frame-ancestors 'none'"
     );
