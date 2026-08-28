@@ -163,7 +163,10 @@
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: 12px;
+      cursor: pointer;
+      display: block;
       overflow: hidden;
+      text-decoration: none;
       transition: box-shadow 180ms ease, transform 180ms ease, background 0.3s ease, border-color 0.3s ease;
     }
 
@@ -330,14 +333,15 @@
 
         grid.innerHTML = projects.map((p) => {
           const categoryLabel = CATEGORY_LABELS[p.category] || p.category;
+          const linkUrl = `project.html?image=${encodeURIComponent(p.image)}&title=${encodeURIComponent(p.link_title || p.title)}`;
           return `
-            <article class="work-card">
+            <a class="work-card" href="${linkUrl}">
               <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.title)}" />
               <div class="work-card-content">
                 <h2>${escapeHtml(p.title)}</h2>
                 <p>${escapeHtml(categoryLabel)}</p>
               </div>
-            </article>
+            </a>
           `;
         }).join('');
       } catch (err) {
