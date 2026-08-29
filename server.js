@@ -971,15 +971,20 @@ async function handleImageUpload(
 
 /* =========================================================
    PORTFOLIO PROJECTS
+
+   Note: getAllProjects/createProject/updateProject/deleteProject are now
+   async, since project data is read from and written to Cloudinary (so it
+   survives Render redeploys/restarts) instead of local disk. Every handler
+   below that calls into portfolioStore is async and awaits it accordingly.
 ========================================================= */
 
-function handleGetPublicProjects(
+async function handleGetPublicProjects(
     request,
     response
 ) {
     try {
         const projects =
-            portfolioStore.getAllProjects();
+            await portfolioStore.getAllProjects();
 
         sendJson(response, 200, {
             projects
@@ -1000,7 +1005,7 @@ function handleGetPublicProjects(
 }
 
 
-function handleGetAdminProjects(
+async function handleGetAdminProjects(
     request,
     response
 ) {
@@ -1012,14 +1017,23 @@ function handleGetAdminProjects(
         return;
     }
 
-    const projects =
-        portfolioStore.getAllProjects();
+    try {
+        const projects =
+            await portfolioStore.getAllProjects();
 
-    sendJson(response, 200, {
-        projects,
-        categories:
-            portfolioStore.VALID_CATEGORIES
-    });
+        sendJson(response, 200, {
+            projects,
+            categories:
+                portfolioStore.VALID_CATEGORIES
+        });
+
+    } catch (err) {
+        sendJson(response, 500, {
+            error:
+                err.message ||
+                "Unable to load projects."
+        });
+    }
 }
 
 
@@ -1041,7 +1055,7 @@ async function handleCreateProject(
         );
 
         const newProject =
-            portfolioStore.createProject(
+            await portfolioStore.createProject(
                 body
             );
 
@@ -1079,7 +1093,7 @@ async function handleUpdateProject(
         );
 
         const updated =
-            portfolioStore.updateProject(
+            await portfolioStore.updateProject(
                 projectId,
                 body
             );
@@ -1105,7 +1119,7 @@ async function handleUpdateProject(
 }
 
 
-function handleDeleteProject(
+async function handleDeleteProject(
     request,
     response,
     projectId
@@ -1119,7 +1133,7 @@ function handleDeleteProject(
     }
 
     try {
-        portfolioStore.deleteProject(
+        await portfolioStore.deleteProject(
             projectId
         );
 
@@ -1642,7 +1656,7 @@ const server = http.createServer(
             requestPath ===
                 "/api/portfolio-projects"
         ) {
-            handleGetPublicProjects(
+            await handleGetPublicProjects(
                 request,
                 response
             );
@@ -1668,7 +1682,7 @@ const server = http.createServer(
             projectsListMatch &&
             request.method === "GET"
         ) {
-            handleGetAdminProjects(
+            await handleGetAdminProjects(
                 request,
                 response
             );
@@ -1705,7 +1719,7 @@ const server = http.createServer(
             projectsItemMatch &&
             request.method === "DELETE"
         ) {
-            handleDeleteProject(
+            await handleDeleteProject(
                 request,
                 response,
                 projectsItemMatch[1]
