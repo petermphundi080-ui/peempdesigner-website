@@ -589,7 +589,11 @@
         </div>
         <div class="contact-item-content">
           <span>Email</span>
-          <a href="mailto:hellopeempdesigner@gmail.com">hellopeempdesigner@gmail.com</a>
+          <a
+            href="mailto:hellopeempdesigner@gmail.com"
+            id="emailLink"
+            data-email="hellopeempdesigner@gmail.com"
+          >hellopeempdesigner@gmail.com</a>
         </div>
       </div>
 
@@ -869,6 +873,35 @@
         // Silently keep the hardcoded fallback text if this fails
       }
     })();
+
+    // --- EMAIL LINK: try mailto first, fall back to Gmail web compose ---
+    // Many visitors browse on a device/browser with no default mail app
+    // configured, so a plain mailto: link silently does nothing. This
+    // detects that case and opens Gmail's web compose window instead.
+    const emailLink = document.getElementById('emailLink');
+    if (emailLink) {
+      emailLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        const address = emailLink.getAttribute('data-email');
+        let handled = false;
+
+        const onBlur = () => { handled = true; };
+        window.addEventListener('blur', onBlur, { once: true });
+
+        window.location.href = 'mailto:' + address;
+
+        setTimeout(() => {
+          window.removeEventListener('blur', onBlur);
+          if (!handled) {
+            window.open(
+              'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(address),
+              '_blank',
+              'noopener,noreferrer'
+            );
+          }
+        }, 600);
+      });
+    }
 
   </script>
 
